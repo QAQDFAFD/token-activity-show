@@ -15,6 +15,7 @@
     "test:unit": "vitest run tests/unit",
     "lint": "eslint .",
     "typecheck": "tsc --build --pretty false",
+    "tsx": "node --experimental-strip-types",
     "package:mac": "pnpm build && electron-builder --mac"
   },
   "dependencies": {
