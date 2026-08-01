@@ -1,0 +1,59 @@
+{
+  "name": "token-show",
+  "version": "0.1.0",
+  "description": "Local activity statistics for coding agents",
+  "type": "module",
+  "main": "out/main/index.js",
+  "packageManager": "pnpm@10.17.1",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "lint": "eslint .",
+    "typecheck": "tsc --build --pretty false",
+    "package:mac": "pnpm build && electron-builder --mac"
+  },
+  "dependencies": {
+    "better-sqlite3": "13.0.2",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@babel/core": "7.29.0",
+    "@babel/eslint-parser": "7.28.6",
+    "@babel/preset-react": "7.28.5",
+    "@babel/preset-typescript": "7.28.5",
+    "@eslint/js": "9.39.2",
+    "@testing-library/react": "16.3.2",
+    "@types/better-sqlite3": "9.6.0",
+    "@types/node": "26.1.2",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "@vitejs/plugin-react": "6.0.5",
+    "electron": "43.2.0",
+    "electron-builder": "26.15.3",
+    "electron-vite": "5.0.0",
+    "eslint": "9.39.2",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "eslint-plugin-react-refresh": "0.5.3",
+    "globals": "17.8.0",
+    "prettier": "3.9.6",
+    "typescript": "7.0.2",
+    "typescript-eslint": "8.65.0",
+    "vite": "8.2.0",
+    "vitest": "4.1.10"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "electron",
+      "electron-winstaller",
+      "esbuild"
+    ]
+  }
+}

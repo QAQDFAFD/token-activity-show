@@ -1,0 +1,12 @@
+appId: com.tokenshow.app
+productName: Token Show
+directories:
+  output: release
+files:
+  - out/**
+  - package.json
+mac:
+  identity: null
+  target:
+    - dmg
+    - zip
