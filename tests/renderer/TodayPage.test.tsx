@@ -28,7 +28,7 @@ describe('TodayPage', () => {
   it('renders an honest unsupported empty state', async () => {
     window.tokenActivityShow = api({ getToday: vi.fn(async () => ({ ok: true, value: { ...today, overall: { ...today.overall!, sessionCount: 0 }, providers: [] } })) })
     render(<TodayPage />)
-    expect(await screen.findByText('还没有可展示的活动')).toBeTruthy()
+    expect(await screen.findByText('等待本地活动')).toBeTruthy()
     expect(screen.getByText(/FORMAT_NOT_ESTABLISHED/)).toBeTruthy()
   })
   it('refreshes once and preserves data after failure', async () => {
