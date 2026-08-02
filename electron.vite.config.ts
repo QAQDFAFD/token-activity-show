@@ -6,7 +6,13 @@ export default defineConfig({
     plugins: [externalizeDepsPlugin()]
   },
   preload: {
-    plugins: [externalizeDepsPlugin()]
+    plugins: [externalizeDepsPlugin()],
+    build: {
+      rollupOptions: {
+        external: ['electron'],
+        output: { format: 'cjs' }
+      }
+    }
   },
   renderer: {
     plugins: [react()]

@@ -20,7 +20,7 @@ function createWindow(): BrowserWindow {
     width: 960,
     height: 720,
     show: false,
-    webPreferences: secureWebPreferences(join(__dirname, '../preload/index.mjs'))
+    webPreferences: secureWebPreferences(join(__dirname, '../preload/index.cjs'))
   })
 
   window.once('ready-to-show', () => window.show())
