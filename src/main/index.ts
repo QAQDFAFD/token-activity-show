@@ -1,6 +1,17 @@
 import { join } from 'node:path'
 import { app, BrowserWindow } from 'electron'
+import { SessionRepository } from './db/session-repository'
+import { SettingsRepository } from './db/settings-repository'
+import { openDatabase } from './db/open-database'
+import { registerIpc } from './ipc/register-ipc'
+import { RefreshCoordinator } from './refresh/refresh-coordinator'
+import { RefreshScheduler } from './refresh/refresh-scheduler'
 import { secureWebPreferences } from './security/window-options'
+import { createClaudeCodeSource } from './sources/claude-code'
+import { createCodexSource } from './sources/codex'
+import { createHermesSource } from './sources/hermes'
+import { createSourceRegistry } from './sources/source-registry'
+import { IPC_CHANNELS } from '../shared/api'
 
 function createWindow(): BrowserWindow {
   const window = new BrowserWindow({
@@ -23,6 +34,44 @@ function createWindow(): BrowserWindow {
 
 void app.whenReady().then(() => {
   createWindow()
+
+  const database = openDatabase(join(app.getPath('userData'), 'token-show.sqlite'))
+  const settings = new SettingsRepository(database)
+  const coordinator = new RefreshCoordinator({
+    registry: createSourceRegistry([
+      createClaudeCodeSource(),
+      createCodexSource(),
+      createHermesSource()
+    ]),
+    sessions: new SessionRepository(database),
+    getSettings: () => settings.get()
+  })
+  const scheduler = new RefreshScheduler(() => coordinator.refresh('scheduled'))
+  const disposeIpc = registerIpc(
+    {
+      getToday: async () => ({ summary: null }),
+      refreshNow: () => coordinator.refresh('manual'),
+      getSettings: async () => settings.get(),
+      updateSettings: async (input) => settings.set(input)
+    },
+    {
+      subscribeRefreshState: (listener) => coordinator.onStateChange(listener),
+      broadcastRefreshState: (state) => {
+        for (const window of BrowserWindow.getAllWindows()) {
+          window.webContents.send(IPC_CHANNELS.refreshState, state)
+        }
+      },
+      rescheduleRefresh: (intervalMinutes) =>
+        scheduler.reschedule(intervalMinutes)
+    }
+  )
+  scheduler.start(settings.get().refreshIntervalMinutes)
+
+  app.once('before-quit', () => {
+    scheduler.stop()
+    disposeIpc()
+    database.close()
+  })
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()

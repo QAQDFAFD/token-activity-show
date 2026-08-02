@@ -3,6 +3,7 @@ import {
   IPC_CHANNELS,
   type AppSettings,
   type RefreshReport,
+  type RefreshState,
   type TodayViewModel
 } from '../../shared/api'
 import { err, ok, type Result } from '../../shared/result'
@@ -21,6 +22,14 @@ export interface IpcServices {
   refreshNow(): Promise<RefreshReport>
   getSettings(): Promise<AppSettings>
   updateSettings(input: UpdateSettingsInput): Promise<AppSettings>
+}
+
+export interface IpcRegistrationOptions {
+  broadcastRefreshState?: (state: RefreshState) => void
+  subscribeRefreshState?: (
+    listener: (state: RefreshState) => void
+  ) => () => void
+  rescheduleRefresh?: (intervalMinutes: number) => void
 }
 
 const invalidInput: AppError = {
@@ -51,7 +60,13 @@ function validatedHandler<Input, Output>(
   }
 }
 
-export function registerIpc(services: IpcServices): () => void {
+export function registerIpc(
+  services: IpcServices,
+  options: IpcRegistrationOptions = {}
+): () => void {
+  const unsubscribeRefreshState = options.subscribeRefreshState?.((state) =>
+    options.broadcastRefreshState?.(state)
+  )
   ipcMain.handle(
     IPC_CHANNELS.getToday,
     validatedHandler(getTodayInputSchema, (input) => services.getToday(input))
@@ -66,9 +81,11 @@ export function registerIpc(services: IpcServices): () => void {
   )
   ipcMain.handle(
     IPC_CHANNELS.updateSettings,
-    validatedHandler(updateSettingsInputSchema, (input) =>
-      services.updateSettings(input)
-    )
+    validatedHandler(updateSettingsInputSchema, async (input) => {
+      const settings = await services.updateSettings(input)
+      options.rescheduleRefresh?.(settings.refreshIntervalMinutes)
+      return settings
+    })
   )
 
   const requestChannels = [
@@ -79,6 +96,7 @@ export function registerIpc(services: IpcServices): () => void {
   ] as const
 
   return () => {
+    unsubscribeRefreshState?.()
     for (const channel of requestChannels) ipcMain.removeHandler(channel)
   }
 }

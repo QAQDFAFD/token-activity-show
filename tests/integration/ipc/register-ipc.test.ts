@@ -30,7 +30,17 @@ describe('registerIpc', () => {
     removeHandler.mockClear()
     services = {
       getToday: vi.fn(async () => ({ summary: null })),
-      refreshNow: vi.fn(async () => ({ status: 'complete' as const })),
+      refreshNow: vi.fn(async () => ({
+        status: 'complete' as const,
+        trigger: 'manual' as const,
+        providers: 0,
+        succeeded: 0,
+        failed: 0,
+        inserted: 0,
+        updated: 0,
+        unchanged: 0,
+        warnings: 0
+      })),
       getSettings: vi.fn(async () => ({
         refreshIntervalMinutes: 10,
         enabledSources: { 'claude-code': true, codex: true, hermes: true }
@@ -78,7 +88,7 @@ describe('registerIpc', () => {
     })
     expect(await handlers.get(IPC_CHANNELS.refreshNow)?.({}, undefined)).toEqual({
       ok: true,
-      value: { status: 'complete' }
+      value: expect.objectContaining({ status: 'complete' })
     })
     expect(await handlers.get(IPC_CHANNELS.getSettings)?.({}, undefined)).toEqual({
       ok: true,
@@ -102,11 +112,39 @@ describe('registerIpc', () => {
     })
   })
 
-  it('removes every registered handler when disposed', () => {
-    const dispose = registerIpc(services)
+  it('reschedules after settings are persisted and forwards refresh states', async () => {
+    const rescheduleRefresh = vi.fn()
+    const broadcastRefreshState = vi.fn()
+    let refreshListener: ((state: { status: 'scanning' }) => void) | undefined
+    const unsubscribe = vi.fn()
+    registerIpc(services, {
+      rescheduleRefresh,
+      broadcastRefreshState,
+      subscribeRefreshState: (listener) => {
+        refreshListener = listener
+        return unsubscribe
+      }
+    })
+    const settings = {
+      refreshIntervalMinutes: 15 as const,
+      enabledSources: { 'claude-code': true, codex: false, hermes: true }
+    }
+
+    await handlers.get(IPC_CHANNELS.updateSettings)?.({}, settings)
+    refreshListener?.({ status: 'scanning' })
+
+    expect(rescheduleRefresh).toHaveBeenCalledWith(15)
+    expect(broadcastRefreshState).toHaveBeenCalledWith({ status: 'scanning' })
+  })
+
+  it('removes every registered handler and state subscription when disposed', () => {
+    const unsubscribe = vi.fn()
+    const dispose = registerIpc(services, {
+      subscribeRefreshState: () => unsubscribe
+    })
     dispose()
 
-    expect(removeHandler).toHaveBeenCalledTimes(4)
+    expect(unsubscribe).toHaveBeenCalledOnce()
     expect(removeHandler.mock.calls.map(([channel]) => channel)).toEqual([
       IPC_CHANNELS.getToday,
       IPC_CHANNELS.refreshNow,

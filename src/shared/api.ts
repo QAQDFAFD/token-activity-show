@@ -31,10 +31,35 @@ export interface TodayViewModel {
   recentSessions?: readonly NormalizedSession[]
 }
 
-export interface RefreshReport {
-  status: 'complete' | 'skipped' | 'failed'
-  reason?: string
+export type RefreshTrigger = 'manual' | 'scheduled'
+
+export interface CompletedRefreshReport {
+  status: 'complete'
+  trigger: RefreshTrigger
+  providers: number
+  succeeded: number
+  failed: number
+  inserted: number
+  updated: number
+  unchanged: number
+  warnings: number
 }
+
+export interface SkippedRefreshReport {
+  status: 'skipped'
+  reason: 'already-running'
+}
+
+export interface FailedRefreshReport {
+  status: 'failed'
+  trigger: RefreshTrigger
+  reason: string
+}
+
+export type RefreshReport =
+  | CompletedRefreshReport
+  | SkippedRefreshReport
+  | FailedRefreshReport
 
 export interface RefreshState {
   status: 'idle' | 'scanning' | 'complete' | 'failed'
