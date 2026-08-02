@@ -13,7 +13,7 @@ afterEach(cleanup)
 describe('SettingsPage', () => {
   it('loads, edits, and saves accepted settings', async () => {
     const updateSettings = vi.fn(async (input) => ({ ok: true as const, value: input }))
-    window.tokenShow = api({ updateSettings })
+    window.tokenActivityShow = api({ updateSettings })
     render(<SettingsPage />)
     const codex = await screen.findByRole('checkbox', { name: '启用 Codex' })
     fireEvent.click(codex)
@@ -23,7 +23,7 @@ describe('SettingsPage', () => {
     expect(await screen.findByText('设置已保存')).toBeTruthy()
   })
   it('keeps controls available after save failure', async () => {
-    window.tokenShow = api({ updateSettings: vi.fn(async () => ({ ok: false, error: { code: 'INTERNAL_ERROR', message: '保存失败' } })) })
+    window.tokenActivityShow = api({ updateSettings: vi.fn(async () => ({ ok: false, error: { code: 'INTERNAL_ERROR', message: '保存失败' } })) })
     render(<SettingsPage />)
     await screen.findByRole('checkbox', { name: '启用 Hermes' })
     fireEvent.click(screen.getByRole('button', { name: '保存设置' }))

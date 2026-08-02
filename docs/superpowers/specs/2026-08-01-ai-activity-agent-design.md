@@ -1,11 +1,11 @@
-# Token Show: AI Activity Agent Design
+# Token Activity Show: AI Activity Agent Design
 
 **Date:** 2026-08-01  
 **Status:** Approved for implementation planning
 
 ## 1. Product summary
 
-Token Show is a local-first desktop application that records how intensely a person uses AI tools each day. It initially supports Claude Code, OpenAI Codex, and Nous Research Hermes Agent. The product treats each tool's native session as the source of truth, summarizes those sessions through a model configured by the user, and produces a daily AI activity journal.
+Token Activity Show is a local-first desktop application that records how intensely a person uses AI tools each day. It initially supports Claude Code, OpenAI Codex, and Nous Research Hermes Agent. The product treats each tool's native session as the source of truth, summarizes those sessions through a model configured by the user, and produces a daily AI activity journal.
 
 The main experience is activity-first rather than quota-first. It answers:
 
@@ -14,7 +14,7 @@ The main experience is activity-first rather than quota-first. It answers:
 - What did I work on, complete, or leave blocked?
 - How has my AI-assisted work changed over the last 7 and 30 days?
 
-Reliable quota information remains available as a secondary feature. Token Show never estimates a remaining quota when no trustworthy source exists.
+Reliable quota information remains available as a secondary feature. Token Activity Show never estimates a remaining quota when no trustworthy source exists.
 
 ## 2. Scope
 

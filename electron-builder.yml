@@ -1,5 +1,5 @@
-appId: com.tokenshow.app
-productName: Token Show
+appId: com.tokenactivityshow.app
+productName: Token Activity Show
 directories:
   output: release
 files:

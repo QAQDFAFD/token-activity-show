@@ -12,9 +12,9 @@ function createRepository(): {
   repository: SessionRepository
   close: () => void
 } {
-  const directory = mkdtempSync(join(tmpdir(), 'token-show-sessions-'))
+  const directory = mkdtempSync(join(tmpdir(), 'token-activity-show-sessions-'))
   temporaryDirectories.push(directory)
-  const database = openDatabase(join(directory, 'token-show.sqlite'))
+  const database = openDatabase(join(directory, 'token-activity-show.sqlite'))
   return {
     repository: new SessionRepository(database),
     close: () => database.close()
@@ -69,7 +69,7 @@ describe('SessionRepository', () => {
       repository.upsertMany([
         session({
           contentVersion: 'version-2',
-          projectName: 'Token Show',
+          projectName: 'Token Activity Show',
           tokenUsage: 1200
         })
       ])
@@ -77,7 +77,7 @@ describe('SessionRepository', () => {
     expect(repository.listByLocalDate('2026-08-01', 'UTC')).toEqual([
       session({
         contentVersion: 'version-2',
-        projectName: 'Token Show',
+        projectName: 'Token Activity Show',
         tokenUsage: 1200
       })
     ])

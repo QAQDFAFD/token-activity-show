@@ -1,5 +1,5 @@
 {
-  "name": "token-show",
+  "name": "token-activity-show",
   "version": "0.1.0",
   "description": "Local activity statistics for coding agents",
   "type": "module",

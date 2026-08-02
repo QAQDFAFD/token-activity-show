@@ -19,7 +19,7 @@ export function App(): React.JSX.Element {
 
   return (
     <div className="app-shell">
-      <aside className="sidebar"><div className="brand"><span aria-hidden="true">TS</span><div><strong>Token Show</strong><small>本地活动</small></div></div><nav aria-label="主导航"><a aria-current={route === 'today' ? 'page' : undefined} href="#/today"><span aria-hidden="true">⌁</span>Today</a><a aria-current={route === 'settings' ? 'page' : undefined} href="#/settings"><span aria-hidden="true">⚙</span>Settings</a></nav><div className="sidebar-footer"><strong>Statistics-only</strong><span>所有数据保存在本机</span></div></aside>
+      <aside className="sidebar"><div className="brand"><span aria-hidden="true">TS</span><div><strong>Token Activity Show</strong><small>本地活动</small></div></div><nav aria-label="主导航"><a aria-current={route === 'today' ? 'page' : undefined} href="#/today"><span aria-hidden="true">⌁</span>Today</a><a aria-current={route === 'settings' ? 'page' : undefined} href="#/settings"><span aria-hidden="true">⚙</span>Settings</a></nav><div className="sidebar-footer"><strong>Statistics-only</strong><span>所有数据保存在本机</span></div></aside>
       <main className="main-view">{route === 'settings' ? <SettingsPage /> : <TodayPage />}</main>
     </div>
   )

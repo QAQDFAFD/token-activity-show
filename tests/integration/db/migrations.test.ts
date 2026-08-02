@@ -7,9 +7,9 @@ import { openDatabase } from '../../../src/main/db/open-database'
 const temporaryDirectories: string[] = []
 
 function temporaryDatabasePath(): string {
-  const directory = mkdtempSync(join(tmpdir(), 'token-show-migrations-'))
+  const directory = mkdtempSync(join(tmpdir(), 'token-activity-show-migrations-'))
   temporaryDirectories.push(directory)
-  return join(directory, 'token-show.sqlite')
+  return join(directory, 'token-activity-show.sqlite')
 }
 
 afterEach(() => {

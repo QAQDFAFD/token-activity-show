@@ -37,7 +37,7 @@ function createWindow(): BrowserWindow {
 void app.whenReady().then(() => {
   createWindow()
 
-  const database = openDatabase(join(app.getPath('userData'), 'token-show.sqlite'))
+  const database = openDatabase(join(app.getPath('userData'), 'token-activity-show.sqlite'))
   const settings = new SettingsRepository(database)
   const sessions = new SessionRepository(database)
   const today = new TodayService({

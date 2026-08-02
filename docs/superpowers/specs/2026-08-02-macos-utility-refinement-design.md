@@ -2,13 +2,13 @@
 
 ## Goal
 
-Refine the existing Token Show Today and Settings interface so it feels like a calm macOS utility rather than a generated dashboard, without changing its information architecture, behavior, or data semantics.
+Refine the existing Token Activity Show Today and Settings interface so it feels like a calm macOS utility rather than a generated dashboard, without changing its information architecture, behavior, or data semantics.
 
 ## Direction
 
 Use a restrained macOS utility language inspired by native settings and inspector surfaces. Hierarchy comes from typography, spacing, alignment, and sparse separators instead of repeated cards, shadows, decorative marks, or marketing-style labels.
 
-The `ui-ux-pro-max` generated recommendation for an App Store landing page, gold accent, Space Mono, and AI-native animations is explicitly rejected because Token Show is a desktop product surface rather than a marketing page.
+The `ui-ux-pro-max` generated recommendation for an App Store landing page, gold accent, Space Mono, and AI-native animations is explicitly rejected because Token Activity Show is a desktop product surface rather than a marketing page.
 
 ## Shell and Navigation
 

@@ -1,6 +1,6 @@
-# Token Show
+# Token Activity Show
 
-Token Show 是一款面向 macOS 的本地桌面应用，用于汇总 Claude Code、OpenAI Codex 和 Nous Research Hermes Agent 的原生会话活动。
+Token Activity Show 是一款面向 macOS 的本地桌面应用，用于汇总 Claude Code、OpenAI Codex 和 Nous Research Hermes Agent 的原生会话活动。
 
 > 当前项目仍处于开发阶段。真实会话格式尚未建立，三个来源目前会明确返回 `FORMAT_NOT_ESTABLISHED`，不会猜测数据格式或伪造统计结果。
 
@@ -38,7 +38,7 @@ pnpm install
 pnpm dev
 ```
 
-该命令会启动 Electron 开发环境并打开 Token Show 窗口。关闭应用窗口即可结束本次运行。
+该命令会启动 Electron 开发环境并打开 Token Activity Show 窗口。关闭应用窗口即可结束本次运行。
 
 ## 测试与质量检查
 
@@ -97,7 +97,7 @@ pnpm package:mac
 
 ## 隐私与安全
 
-Token Show 采用本地优先设计：
+Token Activity Show 采用本地优先设计：
 
 - 收集的数据保存在本机 SQLite 数据库中。
 - 不读取或保存 prompt、回复和其他对话正文。

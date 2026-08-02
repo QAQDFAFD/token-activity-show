@@ -22,7 +22,7 @@ describe('scan to database', () => {
         sourceSessionId: 'native-one',
         startedAt: '2026-08-02T01:00:00.000Z',
         updatedAt: '2026-08-02T01:05:00.000Z',
-        projectName: 'token-show',
+        projectName: 'token-activity-show',
         workingDirectory: null,
         model: null,
         interactionCount: null,

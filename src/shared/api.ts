@@ -8,11 +8,11 @@ import type { Result } from './result'
 import type { GetTodayInput, UpdateSettingsInput } from './schemas'
 
 export const IPC_CHANNELS = Object.freeze({
-  getToday: 'token-show:get-today',
-  refreshNow: 'token-show:refresh-now',
-  getSettings: 'token-show:get-settings',
-  updateSettings: 'token-show:update-settings',
-  refreshState: 'token-show:refresh-state'
+  getToday: 'token-activity-show:get-today',
+  refreshNow: 'token-activity-show:refresh-now',
+  getSettings: 'token-activity-show:get-settings',
+  updateSettings: 'token-activity-show:update-settings',
+  refreshState: 'token-activity-show:refresh-state'
 } as const)
 
 export interface AppError {

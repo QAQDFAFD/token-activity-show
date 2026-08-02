@@ -2,10 +2,10 @@ import type { RendererApi } from '../../shared/api'
 
 declare global {
   interface Window {
-    tokenShow: RendererApi
+    tokenActivityShow: RendererApi
   }
 }
 
 export function getRendererApi(): RendererApi {
-  return window.tokenShow
+  return window.tokenActivityShow
 }

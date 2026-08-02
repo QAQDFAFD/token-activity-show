@@ -18,7 +18,7 @@ afterEach(cleanup)
 
 describe('TodayPage', () => {
   it('renders objective counts and unavailable metrics', async () => {
-    window.tokenShow = api()
+    window.tokenActivityShow = api()
     render(<TodayPage />)
     expect(await screen.findByText('历史数据不足')).toBeTruthy()
     expect(screen.getByText('2')).toBeTruthy()
@@ -26,14 +26,14 @@ describe('TodayPage', () => {
     expect(screen.queryByText(/Users\/|工作目录/)).toBeNull()
   })
   it('renders an honest unsupported empty state', async () => {
-    window.tokenShow = api({ getToday: vi.fn(async () => ({ ok: true, value: { ...today, overall: { ...today.overall!, sessionCount: 0 }, providers: [] } })) })
+    window.tokenActivityShow = api({ getToday: vi.fn(async () => ({ ok: true, value: { ...today, overall: { ...today.overall!, sessionCount: 0 }, providers: [] } })) })
     render(<TodayPage />)
     expect(await screen.findByText('还没有可展示的活动')).toBeTruthy()
     expect(screen.getByText(/FORMAT_NOT_ESTABLISHED/)).toBeTruthy()
   })
   it('refreshes once and preserves data after failure', async () => {
     const refreshNow = vi.fn(async () => ({ ok: false as const, error: { code: 'INTERNAL_ERROR' as const, message: '扫描失败' } }))
-    window.tokenShow = api({ refreshNow })
+    window.tokenActivityShow = api({ refreshNow })
     render(<TodayPage />)
     await screen.findByText('历史数据不足')
     fireEvent.click(screen.getByRole('button', { name: '立即刷新' }))

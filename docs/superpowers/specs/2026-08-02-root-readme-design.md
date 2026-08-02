@@ -2,7 +2,7 @@
 
 ## Goal
 
-Add a Chinese-first `README.md` at the repository root so a developer can install, run, validate, build, and package Token Show without reading internal planning documents.
+Add a Chinese-first `README.md` at the repository root so a developer can install, run, validate, build, and package Token Activity Show without reading internal planning documents.
 
 ## Contents
 

@@ -16,7 +16,7 @@ describe('TodayService', () => {
     sessions.upsertMany([{
       id: 'codex:one', providerId: 'codex', sourceSessionId: 'one',
       startedAt: '2026-08-02T02:00:00.000Z', updatedAt: '2026-08-02T03:00:00.000Z',
-      projectName: 'token-show', workingDirectory: null, model: null,
+      projectName: 'token-activity-show', workingDirectory: null, model: null,
       interactionCount: null, tokenUsage: null, activeDurationSeconds: null,
       contentVersion: 'v1'
     }])

@@ -1,4 +1,4 @@
-# Token Show Foundation and Statistics Slice Implementation Plan
+# Token Activity Show Foundation and Statistics Slice Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -144,11 +144,11 @@ Expected: FAIL because the module does not exist.
 
 - [ ] **Step 3: Implement the hardened shell**
 
-Implement `secureWebPreferences`; create one minimal full-client `BrowserWindow` using it. In `src/main/index.ts`, wait for `app.whenReady()`, create the window, and quit on `window-all-closed` outside macOS. Create a minimal React renderer containing “Token Show” and “Statistics-only mode”. Keep preload empty except for a comment explaining that Task 3 adds the bridge.
+Implement `secureWebPreferences`; create one minimal full-client `BrowserWindow` using it. In `src/main/index.ts`, wait for `app.whenReady()`, create the window, and quit on `window-all-closed` outside macOS. Create a minimal React renderer containing “Token Activity Show” and “Statistics-only mode”. Keep preload empty except for a comment explaining that Task 3 adds the bridge.
 
 - [ ] **Step 4: Add build, lint, and package configuration**
 
-Configure three electron-vite entries, strict TypeScript project references, React linting, and an unsigned local DMG/ZIP target with app ID `com.tokenshow.app`. Do not add signing credentials.
+Configure three electron-vite entries, strict TypeScript project references, React linting, and an unsigned local DMG/ZIP target with app ID `com.tokenactivityshow.app`. Do not add signing credentials.
 
 Run: `pnpm typecheck && pnpm lint && pnpm test && pnpm build`
 Expected: all commands pass and `out/main`, `out/preload`, and `out/renderer` exist.
@@ -156,7 +156,7 @@ Expected: all commands pass and `out/main`, `out/preload`, and `out/renderer` ex
 - [ ] **Step 5: Smoke-test the shell**
 
 Run: `pnpm dev`
-Expected: a macOS window opens, DevTools console has no security warning, and the page shows “Token Show”. Close the app manually.
+Expected: a macOS window opens, DevTools console has no security warning, and the page shows “Token Activity Show”. Close the app manually.
 
 - [ ] **Step 6: Commit**
 
@@ -274,10 +274,10 @@ Mock `ipcMain.handle`; capture handlers; call each with malformed data and asser
 
 - [ ] **Step 4: Implement main handlers and preload bridge**
 
-Parse at the main-process boundary even though the renderer is typed. Wrap expected failures in serializable `Result` values. In preload, expose exactly one frozen object as `window.tokenShow` through `contextBridge.exposeInMainWorld`.
+Parse at the main-process boundary even though the renderer is typed. Wrap expected failures in serializable `Result` values. In preload, expose exactly one frozen object as `window.tokenActivityShow` through `contextBridge.exposeInMainWorld`.
 
 Run: `pnpm vitest run tests/unit/shared tests/integration/ipc && pnpm typecheck`
-Expected: PASS; `src/renderer/src/api.ts` returns `window.tokenShow` without casting to `any`.
+Expected: PASS; `src/renderer/src/api.ts` returns `window.tokenActivityShow` without casting to `any`.
 
 - [ ] **Step 5: Commit**
 
@@ -517,13 +517,13 @@ git commit -m "feat: calculate personal AI activity intensity"
 - Test: `tests/unit/main/application.test.ts`, `tests/unit/main/windows.test.ts`
 
 **Interfaces:**
-- Produces: `createApplication(dependencies): TokenShowApplication`
+- Produces: `createApplication(dependencies): TokenActivityShowApplication`
 - Produces: `WindowController.showMenuBar()`, `showClient()`, `hideMenuBar()`, `dispose()`
 - Consumes: DB, registry, coordinator, scheduler, IPC registration
 
 - [ ] **Step 1: Write lifecycle tests with Electron fakes**
 
-Assert startup opens the database, registers IPC once, starts the configured schedule, performs one startup refresh, and creates the tray. Assert shutdown stops timers, unregisters IPC, closes windows, and closes SQLite. Assert clicking the tray toggles only the popover and “Open Token Show” opens/focuses the full client.
+Assert startup opens the database, registers IPC once, starts the configured schedule, performs one startup refresh, and creates the tray. Assert shutdown stops timers, unregisters IPC, closes windows, and closes SQLite. Assert clicking the tray toggles only the popover and “Open Token Activity Show” opens/focuses the full client.
 
 - [ ] **Step 2: Implement the composition root**
 
@@ -563,7 +563,7 @@ git commit -m "feat: add menu bar application lifecycle"
 
 - [ ] **Step 1: Write renderer behavior tests**
 
-With a fake `window.tokenShow`, assert:
+With a fake `window.tokenActivityShow`, assert:
 
 - cold start says “Not enough history yet” and shows objective counts
 - unknown token data renders “Unavailable”, not `0`

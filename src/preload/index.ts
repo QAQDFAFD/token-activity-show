@@ -34,4 +34,4 @@ const api: RendererApi = Object.freeze({
   }
 })
 
-contextBridge.exposeInMainWorld('tokenShow', api)
+contextBridge.exposeInMainWorld('tokenActivityShow', api)
