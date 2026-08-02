@@ -1,20 +1,4 @@
 import type { NormalizedSession } from '../../../shared/domain'
-
+import { useI18n } from '../i18n'
 const providerNames = { 'claude-code': 'Claude Code', codex: 'Codex', hermes: 'Hermes' } as const
-
-export function RecentSessions({ sessions }: { sessions: readonly NormalizedSession[] }): React.JSX.Element {
-  if (sessions.length === 0) return <></>
-  return (
-    <section className="panel" aria-labelledby="sessions-title">
-      <div className="panel-heading"><h2 id="sessions-title">最近会话</h2><span>最多显示 10 个</span></div>
-      <div className="session-list">
-        {sessions.map((session) => (
-          <article className="session-row" key={session.id}>
-            <div><strong>{session.projectName ?? '未命名项目'}</strong><span>{providerNames[session.providerId]}{session.model ? ` · ${session.model}` : ''}</span></div>
-            <time dateTime={session.updatedAt}>{new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit' }).format(new Date(session.updatedAt))}</time>
-          </article>
-        ))}
-      </div>
-    </section>
-  )
-}
+export function RecentSessions({ sessions }: { sessions: readonly NormalizedSession[] }): React.JSX.Element { const {t,time}=useI18n(); if(!sessions.length)return <></>; return <section className="panel" aria-labelledby="sessions-title"><div className="panel-heading"><h2 id="sessions-title">{t('recentSessions')}</h2><span>{t('upToTen')}</span></div><div className="session-list">{sessions.map((s)=><article className="session-row" key={s.id}><div><strong>{s.projectName??t('unnamedProject')}</strong><span>{providerNames[s.providerId]}{s.model?` · ${s.model}`:''}</span></div><time dateTime={s.updatedAt}>{time(new Date(s.updatedAt))}</time></article>)}</div></section> }

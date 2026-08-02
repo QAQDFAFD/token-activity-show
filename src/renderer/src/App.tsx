@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { SettingsPage } from './pages/SettingsPage'
 import { TodayPage } from './pages/TodayPage'
 import { ThemeControl } from './components/ThemeControl'
+import { useI18n } from './i18n'
 import {
   applyTheme,
   readThemePreference,
@@ -17,6 +18,7 @@ function currentRoute(): Route {
 }
 
 export function App(): React.JSX.Element {
+  const { t } = useI18n()
   const [route, setRoute] = useState<Route>(currentRoute)
   const [theme, setTheme] = useState<ThemePreference>(readThemePreference)
   useEffect(() => {
@@ -36,7 +38,7 @@ export function App(): React.JSX.Element {
 
   return (
     <div className="app-shell">
-      <aside className="sidebar"><div className="brand"><strong>Token Activity Show</strong><small>Activity on this Mac</small></div><nav aria-label="主导航"><a aria-current={route === 'today' ? 'page' : undefined} href="#/today">Today</a><a aria-current={route === 'settings' ? 'page' : undefined} href="#/settings">Settings</a></nav><div className="sidebar-tools"><ThemeControl onChange={changeTheme} value={theme} /><div className="sidebar-footer"><span>数据仅保存在本机</span></div></div></aside>
+      <aside className="sidebar"><div className="brand"><strong>Token Activity Show</strong><small>{t('localActivity')}</small></div><nav aria-label={t('mainNavigation')}><a aria-current={route === 'today' ? 'page' : undefined} href="#/today">{t('todayNav')}</a><a aria-current={route === 'settings' ? 'page' : undefined} href="#/settings">{t('settingsNav')}</a></nav><div className="sidebar-tools"><ThemeControl onChange={changeTheme} value={theme} /><div className="sidebar-footer"><span>{t('localOnly')}</span></div></div></aside>
       <main className="main-view">{route === 'settings' ? <SettingsPage /> : <TodayPage />}</main>
     </div>
   )

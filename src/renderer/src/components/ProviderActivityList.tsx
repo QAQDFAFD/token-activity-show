@@ -1,24 +1,4 @@
 import type { ProviderTodayMetrics } from '../../../shared/api'
-
+import { useI18n } from '../i18n'
 const providerNames = { 'claude-code': 'Claude Code', codex: 'Codex', hermes: 'Hermes' } as const
-const metric = (value: number | null, suffix = ''): string => value === null ? '不可用' : `${value.toLocaleString()}${suffix}`
-
-export function ProviderActivityList({ providers }: { providers: readonly ProviderTodayMetrics[] }): React.JSX.Element {
-  return (
-    <section className="panel" aria-labelledby="providers-title">
-      <div className="panel-heading"><h2 id="providers-title">来源活动</h2><span>{providers.length} 个活跃来源</span></div>
-      <div className="provider-list">
-        {providers.map((provider) => (
-          <article className="provider-row" key={provider.providerId}>
-            <div className="provider-name"><div><strong>{providerNames[provider.providerId]}</strong><span>{provider.sessionCount} 个原生会话</span></div></div>
-            <dl className="provider-metrics">
-              <div><dt>交互</dt><dd>{metric(provider.interactionCount)}</dd></div>
-              <div><dt>Token</dt><dd>{metric(provider.tokenUsage)}</dd></div>
-              <div><dt>活跃时长</dt><dd>{metric(provider.activeDurationSeconds, ' 秒')}</dd></div>
-            </dl>
-          </article>
-        ))}
-      </div>
-    </section>
-  )
-}
+export function ProviderActivityList({ providers }: { providers: readonly ProviderTodayMetrics[] }): React.JSX.Element { const {t,number}=useI18n(); const metric=(v:number|null)=>v===null?t('unavailable'):number(v); return <section className="panel" aria-labelledby="providers-title"><div className="panel-heading"><h2 id="providers-title">{t('sourceActivity')}</h2><span>{t('activeSources',{count:number(providers.length)})}</span></div><div className="provider-list">{providers.map((p)=><article className="provider-row" key={p.providerId}><div className="provider-name"><div><strong>{providerNames[p.providerId]}</strong><span>{t('sessionsCount',{count:number(p.sessionCount)})}</span></div></div><dl className="provider-metrics"><div><dt>{t('interactions')}</dt><dd>{metric(p.interactionCount)}</dd></div><div><dt>{t('tokens')}</dt><dd>{metric(p.tokenUsage)}</dd></div><div><dt>{t('activeDuration')}</dt><dd>{p.activeDurationSeconds===null?t('unavailable'):t('seconds',{value:number(p.activeDurationSeconds)})}</dd></div></dl></article>)}</div></section> }
