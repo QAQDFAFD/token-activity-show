@@ -16,7 +16,7 @@ Token Show 是一款面向 macOS 的本地桌面应用，用于汇总 Claude Cod
 ## 环境要求
 
 - macOS
-- Node.js 22 或更高版本，推荐 `22.23.1`
+- Node.js 22.12.0 或更高版本，推荐 `22.23.1`
 - pnpm `10.17.1`
 
 检查版本：
@@ -120,6 +120,21 @@ node --version
 ```bash
 rm -rf node_modules
 pnpm install
+```
+
+### Electron 启动时报 `Error: Electron uninstall`
+
+该错误表示 Electron npm 包存在，但 Electron.app 二进制未安装。先确认 Node.js 至少为 22.12.0，然后重新运行安装流程：
+
+```bash
+node --version
+pnpm install
+```
+
+项目的 `postinstall` 脚本会显式下载 Electron 二进制。如果依赖目录来自旧安装，也可以单独执行：
+
+```bash
+pnpm exec install-electron
 ```
 
 ### 为什么页面没有真实统计数据？
