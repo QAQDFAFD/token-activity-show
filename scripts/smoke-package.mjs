@@ -1,17 +1,20 @@
 import console from 'node:console'
 import { spawnSync } from 'node:child_process'
-import { access, readdir, stat } from 'node:fs/promises'
+import { access, mkdtemp, readdir, rm, stat, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
 import { basename, join, relative, sep } from 'node:path'
 import process from 'node:process'
+import { pathToFileURL } from 'node:url'
 import { listPackage } from '@electron/asar'
 
-const root = process.cwd()
-const releaseDirectory = join(root, 'release')
-
-function fail(message) {
-  console.error(`Package smoke check failed: ${message}`)
-  process.exit(1)
-}
+const required = [
+  ['main bundle', 'out/main/'],
+  ['preload bundle', 'out/preload/'],
+  ['renderer bundle', 'out/renderer/'],
+  ['package metadata', 'package.json'],
+  ['tray asset', 'src/assets/trayTemplate.png'],
+]
+const forbiddenSegments = new Set(['tests', 'fixtures'])
 
 async function walk(directory) {
   const paths = []
@@ -24,78 +27,124 @@ async function walk(directory) {
 }
 
 function selectSingle(paths, description) {
-  if (paths.length === 0) fail(`missing ${description} under release/`)
+  if (paths.length === 0) throw new Error(`missing ${description} under release/`)
   if (paths.length > 1) {
-    fail(`expected one ${description}, found: ${paths.map((path) => basename(path)).join(', ')}`)
+    throw new Error(
+      `expected one ${description}, found: ${paths.map((path) => basename(path)).join(', ')}`,
+    )
   }
   return paths[0]
 }
 
-let releaseEntries
-try {
-  releaseEntries = await walk(releaseDirectory)
-} catch {
-  fail('missing release/ directory; run pnpm package:mac first')
+export function validateAsar(asarPath, description = 'app.asar') {
+  let packagedPaths
+  try {
+    packagedPaths = listPackage(asarPath)
+      .map((path) => path.replace(/^[/\\]+/u, '').replaceAll('\\', '/'))
+      .filter(Boolean)
+  } catch (error) {
+    throw new Error(
+      `could not inspect ${description}: ${error instanceof Error ? error.message : String(error)}`,
+    )
+  }
+
+  for (const [pathDescription, expectedPath] of required) {
+    if (!packagedPaths.some((path) => path === expectedPath || path.startsWith(expectedPath))) {
+      throw new Error(`${description} missing ${pathDescription}: ${expectedPath}`)
+    }
+  }
+
+  for (const path of packagedPaths) {
+    const segments = path.split('/')
+    const forbiddenSegment = segments.find((segment) => forbiddenSegments.has(segment))
+    if (forbiddenSegment) {
+      throw new Error(`${description} forbidden packaged path: ${path}`)
+    }
+    if (path.startsWith('docs/')) throw new Error(`${description} forbidden packaged path: ${path}`)
+    if (path.endsWith('.map')) throw new Error(`${description} forbidden source map: ${path}`)
+    if (path.includes('evidenced-sessions')) {
+      throw new Error(`${description} forbidden E2E fixture module: ${path}`)
+    }
+  }
+
+  return packagedPaths
 }
 
-const appResources = releaseEntries
-  .filter((path) => path.endsWith(`${sep}Contents${sep}Resources${sep}app.asar`))
-  .map((path) => join(path, '..', '..', '..'))
-const appPath = selectSingle(appResources, 'macOS .app bundle')
-const zipPath = selectSingle(
-  releaseEntries.filter((path) => path.endsWith('.zip')),
-  'ZIP artifact',
-)
-const asarPath = join(appPath, 'Contents', 'Resources', 'app.asar')
-
-const zipResult = spawnSync('unzip', ['-Z1', zipPath], { encoding: 'utf8' })
-if (zipResult.status !== 0) {
-  fail(`could not inspect ZIP artifact: ${(zipResult.stderr || zipResult.stdout).trim()}`)
-}
-if (!zipResult.stdout.split(/\r?\n/u).some((path) => path.endsWith('.app/Contents/Resources/app.asar'))) {
-  fail(`ZIP artifact is missing .app/Contents/Resources/app.asar: ${basename(zipPath)}`)
+function runUnzip(args, zipPath, encoding) {
+  const result = spawnSync('unzip', [...args, zipPath], {
+    encoding,
+    maxBuffer: 1024 * 1024 * 1024,
+  })
+  if (result.status !== 0) {
+    const output = result.stderr || result.stdout
+    throw new Error(`could not inspect ZIP artifact: ${String(output).trim()}`)
+  }
+  return result.stdout
 }
 
-try {
-  await access(asarPath)
-} catch {
-  fail(`missing app archive: ${relative(root, asarPath)}`)
-}
+export async function validateZipAsar(zipPath) {
+  const entries = String(runUnzip(['-Z1'], zipPath, 'utf8'))
+    .split(/\r?\n/u)
+    .filter((path) => path.endsWith('.app/Contents/Resources/app.asar'))
+  const asarEntry = selectSingle(entries, 'app.asar in ZIP artifact')
+  const temporaryDirectory = await mkdtemp(join(tmpdir(), 'token-show-smoke-package-'))
+  const extractedAsarPath = join(temporaryDirectory, 'app.asar')
 
-let packagedPaths
-try {
-  packagedPaths = listPackage(asarPath)
-    .map((path) => path.replace(/^[/\\]+/u, '').replaceAll('\\', '/'))
-    .filter(Boolean)
-} catch (error) {
-  fail(`could not inspect app.asar: ${error instanceof Error ? error.message : String(error)}`)
-}
-
-const required = [
-  ['main bundle', 'out/main/'],
-  ['preload bundle', 'out/preload/'],
-  ['renderer bundle', 'out/renderer/'],
-  ['package metadata', 'package.json'],
-  ['tray asset', 'src/assets/trayTemplate.png'],
-]
-for (const [description, expectedPath] of required) {
-  if (!packagedPaths.some((path) => path === expectedPath || path.startsWith(expectedPath))) {
-    fail(`missing ${description}: ${expectedPath}`)
+  try {
+    const result = spawnSync('unzip', ['-p', zipPath, asarEntry], {
+      encoding: 'buffer',
+      maxBuffer: 1024 * 1024 * 1024,
+    })
+    if (result.status !== 0) {
+      throw new Error(`could not extract ZIP app.asar: ${String(result.stderr).trim()}`)
+    }
+    await writeFile(extractedAsarPath, result.stdout)
+    return validateAsar(extractedAsarPath, 'ZIP app.asar')
+  } finally {
+    await rm(temporaryDirectory, { force: true, recursive: true })
   }
 }
 
-const forbiddenPrefixes = ['tests/', 'fixtures/', 'docs/']
-for (const path of packagedPaths) {
-  const forbiddenPrefix = forbiddenPrefixes.find((prefix) => path.startsWith(prefix))
-  if (forbiddenPrefix) fail(`forbidden packaged path: ${path}`)
-  if (path.endsWith('.map')) fail(`forbidden source map: ${path}`)
-  if (path.includes('evidenced-sessions')) fail(`forbidden E2E fixture module: ${path}`)
+export async function smokePackage(root = process.cwd()) {
+  const releaseDirectory = join(root, 'release')
+  let releaseEntries
+  try {
+    releaseEntries = await walk(releaseDirectory)
+  } catch {
+    throw new Error('missing release/ directory; run pnpm package:mac first')
+  }
+
+  const appResources = releaseEntries
+    .filter((path) => path.endsWith(`${sep}Contents${sep}Resources${sep}app.asar`))
+    .map((path) => join(path, '..', '..', '..'))
+  const appPath = selectSingle(appResources, 'macOS .app bundle')
+  const zipPath = selectSingle(
+    releaseEntries.filter((path) => path.endsWith('.zip')),
+    'ZIP artifact',
+  )
+  const asarPath = join(appPath, 'Contents', 'Resources', 'app.asar')
+
+  try {
+    await access(asarPath)
+  } catch {
+    throw new Error(`missing app archive: ${relative(root, asarPath)}`)
+  }
+
+  const packagedPaths = validateAsar(asarPath, 'unpacked app.asar')
+  await validateZipAsar(zipPath)
+  const [{ size: appArchiveSize }, { size: zipSize }] = await Promise.all([
+    stat(asarPath),
+    stat(zipPath),
+  ])
+  return `Package smoke check passed: ${basename(appPath)}, ${basename(zipPath)} (${packagedPaths.length} asar paths; app.asar ${appArchiveSize} bytes; ZIP ${zipSize} bytes)`
 }
 
-const [{ size: appArchiveSize }, { size: zipSize }] = await Promise.all([
-  stat(asarPath),
-  stat(zipPath),
-])
-console.log(
-  `Package smoke check passed: ${basename(appPath)}, ${basename(zipPath)} (${packagedPaths.length} asar paths; app.asar ${appArchiveSize} bytes; ZIP ${zipSize} bytes)`,
-)
+const isMain = process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url
+if (isMain) {
+  smokePackage()
+    .then((message) => console.log(message))
+    .catch((error) => {
+      console.error(`Package smoke check failed: ${error instanceof Error ? error.message : String(error)}`)
+      process.exitCode = 1
+    })
+}

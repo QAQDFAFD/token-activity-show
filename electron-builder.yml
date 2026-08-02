@@ -6,6 +6,7 @@ files:
   - out/**
   - src/assets/trayTemplate.png
   - package.json
+  - '!**/{tests,fixtures}/**'
 mac:
   identity: null
   target:
