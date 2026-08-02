@@ -6,7 +6,7 @@ import { SettingsPage } from '../../src/renderer/src/pages/SettingsPage'
 
 const settings = { refreshIntervalMinutes: 10, enabledSources: { 'claude-code': true, codex: true, hermes: true } }
 function api(overrides: Partial<RendererApi> = {}): RendererApi {
-  return { getToday: vi.fn(), refreshNow: vi.fn(), getSettings: vi.fn(async () => ({ ok: true, value: settings })), updateSettings: vi.fn(async (input) => ({ ok: true, value: input })), onRefreshState: vi.fn(() => () => undefined), ...overrides }
+  return { getToday: vi.fn(), refreshNow: vi.fn(), getSettings: vi.fn(async () => ({ ok: true, value: settings })), updateSettings: vi.fn(async (input) => ({ ok: true, value: input })), openClient: vi.fn(async () => ({ ok: true, value: undefined })), onRefreshState: vi.fn(() => () => undefined), ...overrides }
 }
 afterEach(cleanup)
 

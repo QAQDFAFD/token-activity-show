@@ -12,7 +12,7 @@ const today: TodayViewModel = {
   metricAvailability: { interactions: false, tokens: false, activeDuration: false }, precisionExplanation: '会话归属开始日期。'
 }
 function api(overrides: Partial<RendererApi> = {}): RendererApi {
-  return { getToday: vi.fn(async () => ({ ok: true, value: today })), refreshNow: vi.fn(async () => ({ ok: true, value: { status: 'complete', trigger: 'manual', providers: 1, succeeded: 1, failed: 0, inserted: 0, updated: 0, unchanged: 2, warnings: 0 } })), getSettings: vi.fn(), updateSettings: vi.fn(), onRefreshState: vi.fn(() => () => undefined), ...overrides }
+  return { getToday: vi.fn(async () => ({ ok: true, value: today })), refreshNow: vi.fn(async () => ({ ok: true, value: { status: 'complete', trigger: 'manual', providers: 1, succeeded: 1, failed: 0, inserted: 0, updated: 0, unchanged: 2, warnings: 0 } })), getSettings: vi.fn(), updateSettings: vi.fn(), openClient: vi.fn(async () => ({ ok: true, value: undefined })), onRefreshState: vi.fn(() => () => undefined), ...overrides }
 }
 afterEach(cleanup)
 

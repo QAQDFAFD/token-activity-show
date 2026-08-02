@@ -45,7 +45,8 @@ describe('registerIpc', () => {
         refreshIntervalMinutes: 10,
         enabledSources: { 'claude-code': true, codex: true, hermes: true }
       })),
-      updateSettings: vi.fn(async (input) => input)
+      updateSettings: vi.fn(async (input) => input),
+      openClient: vi.fn(async () => undefined)
     }
   })
 
@@ -89,6 +90,10 @@ describe('registerIpc', () => {
     expect(await handlers.get(IPC_CHANNELS.refreshNow)?.({}, undefined)).toEqual({
       ok: true,
       value: expect.objectContaining({ status: 'complete' })
+    })
+    expect(await handlers.get(IPC_CHANNELS.openClient)?.({}, undefined)).toEqual({
+      ok: true,
+      value: undefined
     })
     expect(await handlers.get(IPC_CHANNELS.getSettings)?.({}, undefined)).toEqual({
       ok: true,
@@ -149,7 +154,8 @@ describe('registerIpc', () => {
       IPC_CHANNELS.getToday,
       IPC_CHANNELS.refreshNow,
       IPC_CHANNELS.getSettings,
-      IPC_CHANNELS.updateSettings
+      IPC_CHANNELS.updateSettings,
+      IPC_CHANNELS.openClient
     ])
   })
 })

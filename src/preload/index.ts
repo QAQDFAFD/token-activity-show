@@ -27,6 +27,8 @@ const api: RendererApi = Object.freeze({
     input: UpdateSettingsInput
   ): Promise<Result<AppSettings, AppError>> =>
     ipcRenderer.invoke(IPC_CHANNELS.updateSettings, input),
+  openClient: (): Promise<Result<void, AppError>> =>
+    ipcRenderer.invoke(IPC_CHANNELS.openClient, undefined),
   onRefreshState: (listener: (state: RefreshState) => void): (() => void) => {
     const handler = (_event: unknown, state: RefreshState): void => listener(state)
     ipcRenderer.on(IPC_CHANNELS.refreshState, handler)

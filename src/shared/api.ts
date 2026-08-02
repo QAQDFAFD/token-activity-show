@@ -12,6 +12,7 @@ export const IPC_CHANNELS = Object.freeze({
   refreshNow: 'token-activity-show:refresh-now',
   getSettings: 'token-activity-show:get-settings',
   updateSettings: 'token-activity-show:update-settings',
+  openClient: 'token-activity-show:open-client',
   refreshState: 'token-activity-show:refresh-state'
 } as const)
 
@@ -98,5 +99,6 @@ export interface RendererApi {
   updateSettings(
     input: UpdateSettingsInput
   ): Promise<Result<AppSettings, AppError>>
+  openClient(): Promise<Result<void, AppError>>
   onRefreshState(listener: (state: RefreshState) => void): () => void
 }

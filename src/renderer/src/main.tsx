@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App } from './App'
+import { MenuBarApp } from './MenuBarApp'
 import { createI18n, I18nProvider } from './i18n'
 import { applyTheme, readThemePreference } from './theme'
 import './styles.css'
@@ -18,7 +19,7 @@ document.documentElement.lang = i18n.locale
 createRoot(root).render(
   <StrictMode>
     <I18nProvider value={i18n}>
-      <App />
+      {window.location.hash === '#/menu' ? <MenuBarApp /> : <App />}
     </I18nProvider>
   </StrictMode>
 )

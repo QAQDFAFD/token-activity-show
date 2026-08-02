@@ -22,6 +22,7 @@ export interface IpcServices {
   refreshNow(): Promise<RefreshReport>
   getSettings(): Promise<AppSettings>
   updateSettings(input: UpdateSettingsInput): Promise<AppSettings>
+  openClient(): Promise<void>
 }
 
 export interface IpcRegistrationOptions {
@@ -88,11 +89,17 @@ export function registerIpc(
     })
   )
 
+  ipcMain.handle(
+    IPC_CHANNELS.openClient,
+    validatedHandler(refreshNowInputSchema, () => services.openClient())
+  )
+
   const requestChannels = [
     IPC_CHANNELS.getToday,
     IPC_CHANNELS.refreshNow,
     IPC_CHANNELS.getSettings,
-    IPC_CHANNELS.updateSettings
+    IPC_CHANNELS.updateSettings,
+    IPC_CHANNELS.openClient
   ] as const
 
   return () => {

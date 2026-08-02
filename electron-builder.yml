@@ -4,6 +4,7 @@ directories:
   output: release
 files:
   - out/**
+  - src/assets/trayTemplate.png
   - package.json
 mac:
   identity: null
