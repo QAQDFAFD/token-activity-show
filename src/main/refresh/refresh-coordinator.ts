@@ -11,6 +11,7 @@ export interface RefreshCoordinatorDependencies {
   registry: SourceRegistry
   sessions: Pick<SessionRepository, 'upsertMany'>
   getSettings(): SourceSettings
+  afterSuccessfulRefresh?: () => Promise<void> | void
 }
 
 type RefreshStateListener = (state: RefreshState) => void
@@ -68,6 +69,7 @@ export class RefreshCoordinator {
         })
       )
 
+      await this.dependencies.afterSuccessfulRefresh?.()
       const report: RefreshReport = {
         status: 'complete',
         trigger,

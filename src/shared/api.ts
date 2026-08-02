@@ -1,4 +1,9 @@
-import type { NormalizedSession, ProviderId, SourceSettings } from './domain'
+import type {
+  DailyMetrics,
+  NormalizedSession,
+  ProviderId,
+  SourceSettings
+} from './domain'
 import type { Result } from './result'
 import type { GetTodayInput, UpdateSettingsInput } from './schemas'
 
@@ -25,10 +30,30 @@ export interface ProviderTodayMetrics {
   activeDurationSeconds: number | null
 }
 
+export interface TodayIntensity {
+  status: 'insufficient-data' | 'preliminary' | 'established'
+  comparison: 'provisional'
+  score: number
+  band: 'very-low' | 'low' | 'normal' | 'high' | 'very-high'
+  explanation: string
+}
+
 export interface TodayViewModel {
-  summary: string | null
+  summary: null
+  localDate?: string
+  timeZone?: string
+  coveredAt?: string
+  refreshState?: RefreshState
+  overall?: Omit<DailyMetrics, 'date' | 'providerId' | 'capabilities'>
   providers?: readonly ProviderTodayMetrics[]
   recentSessions?: readonly NormalizedSession[]
+  intensity?: TodayIntensity
+  metricAvailability?: {
+    interactions: boolean
+    tokens: boolean
+    activeDuration: boolean
+  }
+  precisionExplanation?: string
 }
 
 export type RefreshTrigger = 'manual' | 'scheduled'

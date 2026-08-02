@@ -1,9 +1,11 @@
 import { join } from 'node:path'
 import { app, BrowserWindow } from 'electron'
 import { SessionRepository } from './db/session-repository'
+import { MetricsRepository } from './db/metrics-repository'
 import { SettingsRepository } from './db/settings-repository'
 import { openDatabase } from './db/open-database'
 import { registerIpc } from './ipc/register-ipc'
+import { TodayService } from './metrics/today-service'
 import { RefreshCoordinator } from './refresh/refresh-coordinator'
 import { RefreshScheduler } from './refresh/refresh-scheduler'
 import { secureWebPreferences } from './security/window-options'
@@ -37,19 +39,37 @@ void app.whenReady().then(() => {
 
   const database = openDatabase(join(app.getPath('userData'), 'token-show.sqlite'))
   const settings = new SettingsRepository(database)
+  const sessions = new SessionRepository(database)
+  const today = new TodayService({
+    sessions,
+    metrics: new MetricsRepository(database)
+  })
+  const currentTodayInput = (): { localDate: string; timeZone: string } => {
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    const localDate = new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(new Date())
+    return { localDate, timeZone }
+  }
   const coordinator = new RefreshCoordinator({
     registry: createSourceRegistry([
       createClaudeCodeSource(),
       createCodexSource(),
       createHermesSource()
     ]),
-    sessions: new SessionRepository(database),
-    getSettings: () => settings.get()
+    sessions,
+    getSettings: () => settings.get(),
+    afterSuccessfulRefresh: async () => {
+      await today.get(currentTodayInput())
+    }
   })
   const scheduler = new RefreshScheduler(() => coordinator.refresh('scheduled'))
   const disposeIpc = registerIpc(
     {
-      getToday: async () => ({ summary: null }),
+      getToday: (input) => today.get(input),
       refreshNow: () => coordinator.refresh('manual'),
       getSettings: async () => settings.get(),
       updateSettings: async (input) => settings.set(input)
