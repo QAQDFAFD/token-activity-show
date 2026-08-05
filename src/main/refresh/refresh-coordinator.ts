@@ -1,4 +1,5 @@
 import type {
+  ProviderRefreshResult,
   RefreshReport,
   RefreshState,
   RefreshTrigger
@@ -44,6 +45,7 @@ export class RefreshCoordinator {
         this.dependencies.getSettings().enabledSources
       )
       const totals = emptyUpsertResult()
+      const providerResults: ProviderRefreshResult[] = []
       let succeeded = 0
       let failed = 0
       let warnings = 0
@@ -52,9 +54,17 @@ export class RefreshCoordinator {
         sources.map(async (source) => {
           try {
             const result = await source.scan({})
-            warnings += result.warnings.length
+            const warningCodes = result.warnings.map(({ code }) =>
+              /^[A-Z][A-Z0-9_]{0,63}$/.test(code) ? code : 'UNKNOWN_WARNING'
+            )
+            warnings += warningCodes.length
+            if (warningCodes.includes('FORMAT_NOT_ESTABLISHED')) {
+              providerResults.push({ providerId: source.providerId, status: 'unsupported', ...emptyUpsertResult(), warningCodes })
+              return
+            }
             if (result.error !== undefined) {
               failed += 1
+              providerResults.push({ providerId: source.providerId, status: 'failed', ...emptyUpsertResult(), warningCodes: [...warningCodes, result.error.code] })
               return
             }
 
@@ -63,8 +73,10 @@ export class RefreshCoordinator {
             totals.updated += upsert.updated
             totals.unchanged += upsert.unchanged
             succeeded += 1
+            providerResults.push({ providerId: source.providerId, status: 'succeeded', ...upsert, warningCodes })
           } catch {
             failed += 1
+            providerResults.push({ providerId: source.providerId, status: 'failed', ...emptyUpsertResult(), warningCodes: [] })
           }
         })
       )
@@ -77,14 +89,14 @@ export class RefreshCoordinator {
         succeeded,
         failed,
         ...totals,
-        warnings
+        warnings,
+        providerResults: sources.map(({ providerId }) => providerResults.find((result) => result.providerId === providerId)!)
       }
       this.emit({ status: 'complete' })
       return report
-    } catch (error) {
-      const reason = error instanceof Error ? error.message : 'Refresh failed'
-      this.emit({ status: 'failed', message: reason })
-      return { status: 'failed', trigger, reason }
+    } catch {
+      this.emit({ status: 'failed' })
+      return { status: 'failed', trigger, reason: 'REFRESH_FAILED' }
     } finally {
       this.running = false
       this.emit({ status: 'idle' })

@@ -39,7 +39,8 @@ describe('registerIpc', () => {
         inserted: 0,
         updated: 0,
         unchanged: 0,
-        warnings: 0
+        warnings: 0,
+        providerResults: []
       })),
       getSettings: vi.fn(async () => ({
         refreshIntervalMinutes: 10,

@@ -59,6 +59,17 @@ export interface TodayViewModel {
 
 export type RefreshTrigger = 'manual' | 'scheduled'
 
+export type ProviderRefreshStatus = 'succeeded' | 'unsupported' | 'failed'
+
+export interface ProviderRefreshResult {
+  providerId: ProviderId
+  status: ProviderRefreshStatus
+  inserted: number
+  updated: number
+  unchanged: number
+  warningCodes: readonly string[]
+}
+
 export interface CompletedRefreshReport {
   status: 'complete'
   trigger: RefreshTrigger
@@ -69,6 +80,7 @@ export interface CompletedRefreshReport {
   updated: number
   unchanged: number
   warnings: number
+  providerResults: readonly ProviderRefreshResult[]
 }
 
 export interface SkippedRefreshReport {
