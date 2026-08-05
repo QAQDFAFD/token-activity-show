@@ -18,7 +18,10 @@ describe('Claude Code source', () => {
       projectName: 'generic-project', workingDirectory: null, model: null,
       interactionCount: 1, tokenUsage: null, activeDurationSeconds: null
     })])
-    expect(result.sessions[0].contentVersion).toMatch(/^[a-f0-9]{64}$/u)
+    const session = result.sessions.at(0)
+    expect(session).toBeDefined()
+    if (session === undefined) throw new Error('Expected one parsed Claude Code session')
+    expect(session.contentVersion).toMatch(/^[a-f0-9]{64}$/u)
     expect(result.warnings).toEqual([expect.objectContaining({ code: 'MALFORMED_RECORD' })])
     expect(JSON.stringify(result)).not.toContain(sentinel)
     expect(await source.scan({ previousFingerprint: result.fingerprint })).toEqual(result)

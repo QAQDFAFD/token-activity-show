@@ -1,3 +1,4 @@
+import { realpath } from 'node:fs/promises'
 import { createReadStream } from 'node:fs'
 import { createHash } from 'node:crypto'
 import path from 'node:path'
@@ -29,7 +30,9 @@ function evidencedId(record: RecordShape): string | null {
     .map((key) => record[key])
     .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
     .map((value) => value.trim())
-  return values.length > 0 && values.every((value) => value === values[0]) ? values[0] : null
+  const first = values.at(0)
+  if (first === undefined) return null
+  return values.every((value) => value === first) ? first : null
 }
 
 export async function parseClaudeCodeFile(filePath: string, projectName: string | null): Promise<{ session: NormalizedSession | null, warnings: SourceWarning[] }> {
@@ -79,7 +82,8 @@ export async function parseClaudeCodeFile(filePath: string, projectName: string 
     return { session: null, warnings }
   }
   const stem = path.basename(filePath, '.jsonl')
-  const sourceSessionId = ids.size === 1 ? [...ids][0] : stem
+  const onlyId = ids.size === 1 ? ids.values().next().value : undefined
+  const sourceSessionId = onlyId ?? stem
   const startedAt = new Date(Math.min(...timestamps)).toISOString()
   const updatedAt = new Date(Math.max(...timestamps)).toISOString()
   return {
@@ -105,11 +109,21 @@ export async function parseClaudeCodeSessions(files: readonly string[], root: st
   const sessions: NormalizedSession[] = []
   const warnings: SourceWarning[] = []
   for (const file of files) {
-    const relative = path.relative(root, file)
-    if (relative.startsWith('..') || path.isAbsolute(relative)) continue
+    let canonicalFile: string
+    try {
+      canonicalFile = await realpath(file)
+    } catch {
+      warnings.push({ code: 'READ_ERROR', message: 'A session file could not be read.' })
+      continue
+    }
+    const relative = path.relative(root, canonicalFile)
+    if (relative.startsWith('..') || path.isAbsolute(relative)) {
+      warnings.push({ code: 'OUTSIDE_ROOT', message: 'A session file resolved outside the configured root.' })
+      continue
+    }
     const segments = relative.split(path.sep)
-    const projectName = segments.length > 1 ? path.basename(path.dirname(file)) : null
-    const parsed = await parseClaudeCodeFile(file, projectName)
+    const projectName = segments.length > 1 ? path.basename(path.dirname(canonicalFile)) : null
+    const parsed = await parseClaudeCodeFile(canonicalFile, projectName)
     if (parsed.session) sessions.push(parsed.session)
     warnings.push(...parsed.warnings)
   }
