@@ -35,7 +35,7 @@ function evidencedId(record: RecordShape): string | null {
   return values.every((value) => value === first) ? first : null
 }
 
-export async function parseClaudeCodeFile(filePath: string, projectName: string | null): Promise<{ session: NormalizedSession | null, warnings: SourceWarning[] }> {
+export async function parseClaudeCodeFile(filePath: string, projectName: string | null, fallbackSourceSessionId?: string): Promise<{ session: NormalizedSession | null, warnings: SourceWarning[] }> {
   const warnings: SourceWarning[] = []
   const ids = new Set<string>()
   const timestamps: number[] = []
@@ -83,7 +83,7 @@ export async function parseClaudeCodeFile(filePath: string, projectName: string 
   }
   const stem = path.basename(filePath, '.jsonl')
   const onlyId = ids.size === 1 ? ids.values().next().value : undefined
-  const sourceSessionId = onlyId ?? stem
+  const sourceSessionId = onlyId ?? fallbackSourceSessionId ?? stem
   const startedAt = new Date(Math.min(...timestamps)).toISOString()
   const updatedAt = new Date(Math.max(...timestamps)).toISOString()
   return {
@@ -123,7 +123,8 @@ export async function parseClaudeCodeSessions(files: readonly string[], root: st
     }
     const segments = relative.split(path.sep)
     const projectName = segments.length > 1 ? path.basename(path.dirname(canonicalFile)) : null
-    const parsed = await parseClaudeCodeFile(canonicalFile, projectName)
+    const fallbackSourceSessionId = createHash('sha256').update(relative).digest('hex')
+    const parsed = await parseClaudeCodeFile(canonicalFile, projectName, fallbackSourceSessionId)
     if (parsed.session) sessions.push(parsed.session)
     warnings.push(...parsed.warnings)
   }
