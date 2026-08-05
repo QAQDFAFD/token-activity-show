@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createElement } from 'react'
 import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createApplication } from '../../src/main/application'
 import type { IpcServices } from '../../src/main/ipc/register-ipc'
 import type { RefreshCoordinatorDependencies } from '../../src/main/refresh/refresh-coordinator'
@@ -23,7 +23,13 @@ declare global {
 
 const temporaryDirectories: string[] = []
 
+beforeEach(() => {
+  vi.useFakeTimers({ shouldAdvanceTime: true })
+  vi.setSystemTime(new Date('2026-08-02T12:00:00.000Z'))
+})
+
 afterEach(() => {
+  vi.useRealTimers()
   cleanup()
   delete window.tokenActivityShow
   for (const directory of temporaryDirectories.splice(0)) rmSync(directory, { recursive: true, force: true })

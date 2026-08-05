@@ -1,0 +1,7 @@
+{"type":"system","sessionId":"generic-session","timestamp":"2026-01-01T00:00:00.000Z","content":"PRIVATE_SENTINEL_DO_NOT_PERSIST"}
+{"type":"user","sessionId":"generic-session","timestamp":"2026-01-01T00:01:00.000Z","message":{"content":"generic request"}}
+{"type":"assistant","sessionId":"generic-session","timestamp":"2026-01-01T00:02:00.000Z","message":{"content":"generic response"}}
+{"type":"user","sessionId":"generic-session","timestamp":"2026-01-01T00:03:00.000Z","isMeta":true,"content":"generic metadata"}
+{"type":"user","sessionId":"generic-session","timestamp":"2026-01-01T00:04:00.000Z","content":"   "}
+not-json
+{"type":"queue-operation","sessionId":"generic-session","timestamp":"2026-01-01T00:05:00.000Z","content":"generic queue entry"}

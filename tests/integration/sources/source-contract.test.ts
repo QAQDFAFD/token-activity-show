@@ -12,27 +12,26 @@ const sources: SessionSource[] = [
 ]
 
 describe.each(sources)('$providerId source contract', (source) => {
-  it('is explicit, truthful, idempotent, and content-free while unsupported', async () => {
+  it('is explicit, truthful, idempotent, and content-free', async () => {
     const detection = await source.detect()
     const first = await source.scan({})
     const second = await source.scan({ previousFingerprint: first.fingerprint })
 
-    expect(detection.available).toBe(false)
-    expect(detection.reason).toBe('FORMAT_NOT_ESTABLISHED')
     expect(first).toEqual(second)
-    expect(first.sessions).toEqual([])
-    expect(Object.values(first.capabilities)).toEqual([
-      false,
-      false,
-      false,
-      false,
-      false
-    ])
-    expect(first.warnings).toEqual([
-      expect.objectContaining({ code: 'FORMAT_NOT_ESTABLISHED' })
-    ])
     expect(first.fingerprint).toMatch(/^[a-f0-9]{64}$/u)
     expect(JSON.stringify(first)).not.toMatch(/prompt|response|message content/iu)
+
+    if (source.providerId === 'claude-code') {
+      expect(detection.available).toBe(true)
+      expect(first.sessions).toHaveLength(1)
+      expect(first.capabilities.interactions).toBe(true)
+    } else {
+      expect(detection.available).toBe(false)
+      expect(detection.reason).toBe('FORMAT_NOT_ESTABLISHED')
+      expect(first.sessions).toEqual([])
+      expect(Object.values(first.capabilities)).toEqual([false, false, false, false, false])
+      expect(first.warnings).toEqual([expect.objectContaining({ code: 'FORMAT_NOT_ESTABLISHED' })])
+    }
   })
 })
 
