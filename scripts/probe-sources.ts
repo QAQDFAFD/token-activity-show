@@ -1,9 +1,17 @@
 #!/usr/bin/env node
-import { stat, readFile, writeFile } from 'node:fs/promises'
-import { extname, join, relative, resolve } from 'node:path'
+import { createReadStream } from 'node:fs'
+import {
+  lstat,
+  open,
+  opendir,
+  realpath,
+  stat,
+  writeFile
+} from 'node:fs/promises'
+import { extname, join } from 'node:path'
 import { homedir } from 'node:os'
 import process from 'node:process'
-import Database from 'better-sqlite3'
+import { createInterface } from 'node:readline'
 import type { ProviderId } from '../src/shared/domain'
 
 interface ProbeOptions {
@@ -12,21 +20,19 @@ interface ProbeOptions {
   output?: string
 }
 
-interface StructuralSample {
-  timestamp: string | null
-  type: string | null
-}
-
 interface ProbeReport {
   provider: ProviderId
   status: 'detected' | 'not-detected'
-  candidatePath: string
+  pathTemplate: string
   extension?: string
   byteSize?: number
   topLevelKeys?: string[]
-  sqlite?: Array<{ table: string; columns: string[] }>
-  recordCount?: number
-  samples?: StructuralSample[]
+  typeCounts?: Record<string, number>
+  timestampParseability?: {
+    parseable: number
+    unparseable: number
+    missing: number
+  }
   reasonCode?: 'PATH_NOT_FOUND' | 'UNSUPPORTED_STRUCTURE' | 'READ_ERROR'
 }
 
@@ -39,11 +45,22 @@ const DEFAULT_CANDIDATES: Record<ProviderId, string[]> = {
   ]
 }
 
-const SENSITIVE_KEY =
-  /(content|message|prompt|response|text|token|secret|cookie|credential|environment|api.?key)/i
-const TIMESTAMP_KEY =
-  /^(created_at|updated_at|started_at|timestamp|time|date)$/i
-const TYPE_KEY = /^(type|kind|role|event_type)$/i
+// Privacy/resource limits apply across one invocation, not independently per directory.
+const MAX_FILES = 100
+const MAX_TOTAL_BYTES = 4 * 1024 * 1024
+const MAX_FILE_BYTES = 1024 * 1024
+const MAX_LINE_BYTES = 256 * 1024
+const MAX_RECORDS_PER_FILE = 100
+const ALLOWED_RECORD_TYPES = new Set([
+  'assistant',
+  'file-history-snapshot',
+  'progress',
+  'queue-operation',
+  'summary',
+  'system',
+  'user'
+])
+const TIMESTAMP_KEYS = ['timestamp', 'created_at', 'updated_at', 'started_at']
 
 function usage(): never {
   console.error(
@@ -79,163 +96,241 @@ function parseArgs(argv: string[]): ProbeOptions {
   }
 }
 
-function displayPath(path: string): string {
-  const home = resolve(homedir())
-  const absolute = resolve(path)
-  const withinHome = relative(home, absolute)
-  return withinHome === ''
-    ? '~'
-    : withinHome.startsWith('..')
-      ? '<external-path>'
-      : `~/${withinHome}`
+function isWithinRoot(root: string, candidate: string): boolean {
+  return candidate === root || candidate.startsWith(`${root}/`)
 }
 
-function safeKeys(value: unknown): string[] {
-  if (value === null || typeof value !== 'object' || Array.isArray(value))
-    return []
-  return Object.keys(value)
-    .filter((key) => !SENSITIVE_KEY.test(key))
-    .sort()
-}
-
-function structuralSample(value: unknown): StructuralSample {
-  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
-    return { timestamp: null, type: null }
+function pathTemplate(provider: ProviderId, extension = ''): string {
+  if (
+    provider === 'claude-code' &&
+    (extension === '.jsonl' || extension === '.ndjson')
+  ) {
+    return `<project>/<session>${extension}`
   }
-  const entries = Object.entries(value)
-  const timestamp = entries.find(
-    ([key, item]) => TIMESTAMP_KEY.test(key) && typeof item === 'string'
-  )?.[1]
-  const type = entries.find(
-    ([key, item]) => TYPE_KEY.test(key) && typeof item === 'string'
-  )?.[1]
+  return `<source>/<record>${extension || '.unknown'}`
+}
+
+function emptyTimestampCounts(): NonNullable<
+  ProbeReport['timestampParseability']
+> {
+  return { parseable: 0, unparseable: 0, missing: 0 }
+}
+
+function collectRecord(
+  value: unknown,
+  keys: Set<string>,
+  typeCounts: Record<string, number>,
+  timestamps: NonNullable<ProbeReport['timestampParseability']>
+): void {
+  if (value === null || typeof value !== 'object' || Array.isArray(value))
+    return
+  const record = value as Record<string, unknown>
+  for (const key of Object.keys(record)) keys.add(key)
+
+  if (
+    typeof record.type === 'string' &&
+    ALLOWED_RECORD_TYPES.has(record.type)
+  ) {
+    typeCounts[record.type] = (typeCounts[record.type] ?? 0) + 1
+  }
+
+  const timestamp = TIMESTAMP_KEYS.map((key) => record[key]).find(
+    (item) => item !== undefined
+  )
+  if (timestamp === undefined) timestamps.missing += 1
+  else if (
+    typeof timestamp === 'string' &&
+    !Number.isNaN(Date.parse(timestamp))
+  ) {
+    timestamps.parseable += 1
+  } else timestamps.unparseable += 1
+}
+
+async function probeJsonLines(
+  path: string,
+  provider: ProviderId,
+  byteSize: number,
+  byteBudget: number
+): Promise<ProbeReport> {
+  const extension = extname(path).toLowerCase()
+  const sampledBytes = Math.min(byteSize, MAX_FILE_BYTES, byteBudget)
+  const keys = new Set<string>()
+  const typeCounts: Record<string, number> = {}
+  const timestamps = emptyTimestampCounts()
+  let sampledRecords = 0
+
+  if (sampledBytes > 0) {
+    const input = createReadStream(path, {
+      start: 0,
+      end: sampledBytes - 1,
+      encoding: 'utf8'
+    })
+    const lines = createInterface({ input, crlfDelay: Infinity })
+    for await (const line of lines) {
+      if (sampledRecords >= MAX_RECORDS_PER_FILE) break
+      if (
+        Buffer.byteLength(line, 'utf8') > MAX_LINE_BYTES ||
+        line.trim() === ''
+      )
+        continue
+      try {
+        collectRecord(JSON.parse(line) as unknown, keys, typeCounts, timestamps)
+        sampledRecords += 1
+      } catch {
+        // Malformed records are structural noise and are never echoed.
+      }
+    }
+    lines.close()
+    input.destroy()
+  }
+
   return {
-    timestamp:
-      typeof timestamp === 'string' && !Number.isNaN(Date.parse(timestamp))
-        ? timestamp
-        : null,
-    type:
-      typeof type === 'string' && /^[a-z0-9_.-]{1,64}$/i.test(type)
-        ? type
-        : null
+    provider,
+    status: 'detected',
+    pathTemplate: pathTemplate(provider, extension),
+    extension,
+    byteSize,
+    topLevelKeys: [...keys].sort(),
+    typeCounts: Object.fromEntries(
+      Object.entries(typeCounts).sort(([left], [right]) =>
+        left.localeCompare(right)
+      )
+    ),
+    timestampParseability: timestamps
   }
 }
 
 async function probeJson(
   path: string,
   provider: ProviderId,
-  byteSize: number
+  byteSize: number,
+  byteBudget: number
 ): Promise<ProbeReport> {
-  const parsed: unknown = JSON.parse(await readFile(path, 'utf8'))
-  const records = Array.isArray(parsed) ? parsed : [parsed]
-  return {
-    provider,
-    status: 'detected',
-    candidatePath: displayPath(path),
-    extension: extname(path).toLowerCase() || '<none>',
-    byteSize,
-    topLevelKeys: safeKeys(Array.isArray(parsed) ? parsed[0] : parsed),
-    recordCount: records.length,
-    samples: records.slice(0, 3).map(structuralSample)
+  const extension = extname(path).toLowerCase()
+  if (byteSize > Math.min(MAX_FILE_BYTES, byteBudget)) {
+    return {
+      provider,
+      status: 'not-detected',
+      pathTemplate: pathTemplate(provider, extension),
+      extension,
+      byteSize,
+      reasonCode: 'UNSUPPORTED_STRUCTURE'
+    }
   }
-}
-
-async function probeJsonLines(
-  path: string,
-  provider: ProviderId,
-  byteSize: number
-): Promise<ProbeReport> {
-  const lines = (await readFile(path, 'utf8'))
-    .split(/\r?\n/u)
-    .filter((line) => line.trim() !== '')
-  const records = lines.slice(0, 3).map((line) => JSON.parse(line) as unknown)
-  return {
-    provider,
-    status: 'detected',
-    candidatePath: displayPath(path),
-    extension: extname(path).toLowerCase() || '<none>',
-    byteSize,
-    topLevelKeys: safeKeys(records[0]),
-    recordCount: lines.length,
-    samples: records.map(structuralSample)
-  }
-}
-
-function probeSqlite(
-  path: string,
-  provider: ProviderId,
-  byteSize: number
-): ProbeReport {
-  const database = new Database(path, { readonly: true, fileMustExist: true })
+  const handle = await open(path, 'r')
   try {
-    const tables = database
-      .prepare(
-        "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
-      )
-      .all() as Array<{ name: string }>
+    const contents = await handle.readFile({ encoding: 'utf8' })
+    const parsed: unknown = JSON.parse(contents)
+    const records = Array.isArray(parsed)
+      ? parsed.slice(0, MAX_RECORDS_PER_FILE)
+      : [parsed]
+    const keys = new Set<string>()
+    const typeCounts: Record<string, number> = {}
+    const timestamps = emptyTimestampCounts()
+    for (const record of records)
+      collectRecord(record, keys, typeCounts, timestamps)
     return {
       provider,
       status: 'detected',
-      candidatePath: displayPath(path),
-      extension: extname(path).toLowerCase() || '<none>',
+      pathTemplate: pathTemplate(provider, extension),
+      extension,
       byteSize,
-      sqlite: tables.map(({ name }) => ({
-        table: name,
-        columns: (
-          database
-            .prepare(`PRAGMA table_info(${JSON.stringify(name)})`)
-            .all() as Array<{ name: string }>
-        ).map((column) => column.name)
-      }))
+      topLevelKeys: [...keys].sort(),
+      typeCounts: Object.fromEntries(
+        Object.entries(typeCounts).sort(([left], [right]) =>
+          left.localeCompare(right)
+        )
+      ),
+      timestampParseability: timestamps
     }
   } finally {
-    database.close()
+    await handle.close()
+  }
+}
+
+async function collectFiles(root: string): Promise<string[]> {
+  const files: string[] = []
+  const pending = [root]
+  while (pending.length > 0 && files.length < MAX_FILES) {
+    const directory = pending.shift()
+    if (directory === undefined) break
+    const entries = []
+    for await (const entry of await opendir(directory)) entries.push(entry)
+    entries.sort((left, right) => left.name.localeCompare(right.name))
+    for (const entry of entries) {
+      if (files.length >= MAX_FILES) break
+      const candidate = join(directory, entry.name)
+      const metadata = await lstat(candidate)
+      if (metadata.isSymbolicLink()) continue
+      const canonical = await realpath(candidate)
+      if (!isWithinRoot(root, canonical)) continue
+      if (metadata.isDirectory()) pending.push(canonical)
+      else if (metadata.isFile()) files.push(canonical)
+    }
+    pending.sort((left, right) => left.localeCompare(right))
+  }
+  return files
+}
+
+async function probeFile(
+  path: string,
+  provider: ProviderId,
+  byteBudget: number
+): Promise<ProbeReport> {
+  const metadata = await stat(path)
+  const extension = extname(path).toLowerCase()
+  if (extension === '.jsonl' || extension === '.ndjson') {
+    return probeJsonLines(path, provider, metadata.size, byteBudget)
+  }
+  if (extension === '.json')
+    return probeJson(path, provider, metadata.size, byteBudget)
+  return {
+    provider,
+    status: 'not-detected',
+    pathTemplate: pathTemplate(provider, extension),
+    extension: extension || '<none>',
+    byteSize: metadata.size,
+    reasonCode: 'UNSUPPORTED_STRUCTURE'
   }
 }
 
 async function probeCandidate(
   path: string,
   provider: ProviderId
-): Promise<ProbeReport> {
-  const candidatePath = displayPath(path)
+): Promise<ProbeReport[]> {
   try {
-    const metadata = await stat(path)
-    if (!metadata.isFile()) {
-      return {
+    const canonicalRoot = await realpath(path)
+    const metadata = await stat(canonicalRoot)
+    const files = metadata.isDirectory()
+      ? await collectFiles(canonicalRoot)
+      : [canonicalRoot]
+    const reports: ProbeReport[] = []
+    let remainingBytes = MAX_TOTAL_BYTES
+    for (const file of files) {
+      if (remainingBytes <= 0) break
+      const report = await probeFile(file, provider, remainingBytes)
+      reports.push(report)
+      remainingBytes -= Math.min(report.byteSize ?? 0, MAX_FILE_BYTES)
+    }
+    if (reports.length > 0) return reports
+    return [
+      {
         provider,
         status: 'detected',
-        candidatePath,
+        pathTemplate: pathTemplate(provider),
         reasonCode: 'UNSUPPORTED_STRUCTURE'
       }
-    }
-    const extension = extname(path).toLowerCase()
-    if (extension === '.json')
-      return await probeJson(path, provider, metadata.size)
-    if (extension === '.jsonl' || extension === '.ndjson')
-      return await probeJsonLines(path, provider, metadata.size)
-    if (
-      extension === '.sqlite' ||
-      extension === '.sqlite3' ||
-      extension === '.db'
-    ) {
-      return probeSqlite(path, provider, metadata.size)
-    }
-    return {
-      provider,
-      status: 'not-detected',
-      candidatePath,
-      extension: extension || '<none>',
-      byteSize: metadata.size,
-      reasonCode: 'UNSUPPORTED_STRUCTURE'
-    }
+    ]
   } catch (error) {
     const code = (error as NodeJS.ErrnoException).code
-    return {
-      provider,
-      status: 'not-detected',
-      candidatePath,
-      reasonCode: code === 'ENOENT' ? 'PATH_NOT_FOUND' : 'READ_ERROR'
-    }
+    return [
+      {
+        provider,
+        status: 'not-detected',
+        pathTemplate: pathTemplate(provider),
+        reasonCode: code === 'ENOENT' ? 'PATH_NOT_FOUND' : 'READ_ERROR'
+      }
+    ]
   }
 }
 
@@ -245,9 +340,11 @@ async function main(): Promise<void> {
     options.path === undefined
       ? DEFAULT_CANDIDATES[options.provider]
       : [options.path]
-  const reports = await Promise.all(
-    candidates.map((path) => probeCandidate(path, options.provider))
-  )
+  const reports = (
+    await Promise.all(
+      candidates.map((path) => probeCandidate(path, options.provider))
+    )
+  ).flat()
   const output = `${JSON.stringify(reports, null, 2)}\n`
   process.stdout.write(output)
   if (options.output !== undefined)
