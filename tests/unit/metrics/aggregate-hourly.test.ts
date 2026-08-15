@@ -76,6 +76,15 @@ describe('aggregateHourlyActivity', () => {
     expect(buckets.find((bucket) => bucket.hour === 8)?.totalInteractions).toBe(1)
   })
 
+  it('keeps hourly values null when a provider has sessions without event timestamps', () => {
+    const buckets = aggregateHourlyActivity([
+      session({ interactionCount: 4, interactionEvents: [] })
+    ], '2026-08-02', 'UTC')
+
+    expect(buckets.every((bucket) => bucket.byProvider['claude-code'] === null)).toBe(true)
+    expect(buckets.every((bucket) => bucket.totalInteractions === null)).toBe(true)
+  })
+
   it('returns an all-unavailable chart when no provider has event-level data', () => {
     const buckets = aggregateHourlyActivity([], '2026-08-02', 'UTC')
     const first = buckets[0]

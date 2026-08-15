@@ -35,8 +35,8 @@ describe('TodayService', () => {
     expect(view.providers).toEqual([expect.objectContaining({ providerId: 'codex', sessionCount: 1 })])
     expect(view.hourlyActivity).toHaveLength(24)
     expect(view.hourlyActivity?.find((bucket) => bucket.hour === 2)).toMatchObject({
-      totalInteractions: 0,
-      byProvider: { 'claude-code': null, codex: 0, hermes: null }
+      totalInteractions: null,
+      byProvider: { 'claude-code': null, codex: null, hermes: null }
     })
     expect(view.recentSessions).toHaveLength(1)
     expect(metrics.get('2026-08-02', 'codex')).toMatchObject({ sessionCount: 1, tokenUsage: null })

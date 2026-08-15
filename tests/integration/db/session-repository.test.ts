@@ -86,6 +86,23 @@ describe('SessionRepository', () => {
     close()
   })
 
+  it('round-trips interaction event timestamps as JSON', () => {
+    const { repository, close } = createRepository()
+    const events = ['2026-08-01T06:40:00.000Z', '2026-08-01T06:55:00.000Z']
+    repository.upsertMany([
+      session({
+        interactionCount: 2,
+        interactionEvents: events
+      })
+    ])
+
+    expect(repository.listByLocalDate('2026-08-01', 'UTC')).toEqual([
+      session({ interactionCount: 2, interactionEvents: events })
+    ])
+
+    close()
+  })
+
   it('enforces provider and native source-session uniqueness', () => {
     const { repository, close } = createRepository()
 

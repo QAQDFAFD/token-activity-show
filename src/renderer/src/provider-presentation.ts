@@ -27,5 +27,9 @@ const presentations: Record<ProviderId, ProviderPresentation> = {
 export const PROVIDER_PRESENTATIONS = Object.freeze(presentations)
 
 export function providerPresentation(providerId: ProviderId): ProviderPresentation {
-  return presentations[providerId]
+  return presentations[providerId] ?? {
+    label: providerId,
+    colorToken: 'var(--muted)',
+    className: 'provider-unknown'
+  }
 }

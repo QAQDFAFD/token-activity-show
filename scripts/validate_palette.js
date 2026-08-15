@@ -2,6 +2,10 @@
 'use strict'
 
 const SURFACES = { light: '#FFFFFF', dark: '#27282E' }
+const PALETTES = {
+  light: ['#0A66D9', '#1E8E3E', '#C2410C'],
+  dark: ['#8CC2FF', '#7FD88F', '#F5A623']
+}
 
 function luminance(hex) {
   const value = hex.replace('#', '')
@@ -32,31 +36,42 @@ function parseArguments() {
 const { mode, colors } = parseArguments()
 
 if (colors.length === 0) {
-  console.error('Usage: node scripts/validate_palette.js "<hex color> <hex color> ..." --mode light|dark')
-  process.exit(2)
-}
-
-const surface = SURFACES[mode]
-if (surface === undefined) {
-  console.error(`Unknown mode "${mode}". Use --mode light or --mode dark.`)
-  process.exit(2)
-}
-
-const threshold = 3
-const failures = []
-for (const color of colors) {
-  if (!/^#[0-9a-fA-F]{6}$/.test(color)) {
-    failures.push(`${color}: not a 6-digit hex color`)
-    continue
+  const modes = ['light', 'dark']
+  let failed = false
+  for (const mode of modes) {
+    console.log(`Validating built-in ${mode} palette against ${SURFACES[mode]}`)
+    const result = validate(mode, PALETTES[mode])
+    failed = failed || result
   }
-  const ratio = contrast(color, surface)
-  const ok = ratio >= threshold
-  console.log(`${ok ? 'PASS' : 'FAIL'} ${color} vs ${surface}: ${ratio.toFixed(2)}:1 (requires ${threshold}:1)`)
-  if (!ok) failures.push(`${color} vs ${surface}: ${ratio.toFixed(2)}:1`)
+  if (failed) process.exit(1)
+  process.exit(0)
 }
 
-if (failures.length > 0) {
-  console.error(`Palette rejected for ${mode} mode:`)
-  for (const failure of failures) console.error(`  - ${failure}`)
-  process.exit(1)
+const failures = validate(mode, colors)
+if (failures) process.exit(1)
+
+function validate(mode, palette) {
+  const surface = SURFACES[mode]
+  if (surface === undefined) {
+    console.error(`Unknown mode "${mode}". Use --mode light or --mode dark.`)
+    return true
+  }
+  const threshold = 3
+  const failures = []
+  for (const color of palette) {
+    if (!/^#[0-9a-fA-F]{6}$/.test(color)) {
+      failures.push(`${color}: not a 6-digit hex color`)
+      continue
+    }
+    const ratio = contrast(color, surface)
+    const ok = ratio >= threshold
+    console.log(`${ok ? 'PASS' : 'FAIL'} ${color} vs ${surface}: ${ratio.toFixed(2)}:1 (requires ${threshold}:1)`)
+    if (!ok) failures.push(`${color} vs ${surface}: ${ratio.toFixed(2)}:1`)
+  }
+  if (failures.length > 0) {
+    console.error(`Palette rejected for ${mode} mode:`)
+    for (const failure of failures) console.error(`  - ${failure}`)
+    return true
+  }
+  return false
 }

@@ -11,7 +11,7 @@ function barAriaLabel(bucket: HourlyActivity, labels: { unavailable: string; tot
     return count === null ? `${label} ${labels.unavailable}` : `${label} ${count}`
   })
   const total = bucket.totalInteractions === null ? labels.unavailable : String(bucket.totalInteractions)
-  return `${hourText}，${labels.total} ${total}（${parts.join('，')}）`
+  return `${hourText}, ${labels.total} ${total} (${parts.join(', ')})`
 }
 
 export function HourlyActivityChart({ activity }: { activity: readonly HourlyActivity[] }): React.JSX.Element {

@@ -42,6 +42,10 @@ export function aggregateHourlyActivity(
     const matching = sessions.filter((session) => session.providerId === providerId)
     if (matching.length === 0) continue
 
+    const hasEventData = matching.some((session) => session.interactionEvents.length > 0)
+    const noActivityConfirmed = matching.every((session) => session.interactionCount === 0)
+    if (!hasEventData && !noActivityConfirmed) continue
+
     for (const session of matching) {
       for (const at of session.interactionEvents) {
         if (!Number.isFinite(Date.parse(at))) continue
