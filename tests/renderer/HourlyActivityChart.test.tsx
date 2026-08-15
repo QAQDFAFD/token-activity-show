@@ -41,7 +41,7 @@ describe('HourlyActivityChart', () => {
     })
     renderChart(activity)
 
-    const bars = screen.getAllByRole('img', { hidden: false })
+    const bars = screen.getAllByRole('button', { hidden: false })
     expect(bars).toHaveLength(24)
     const hour8 = bars.find((bar) => bar.getAttribute('aria-label')?.includes('8:00'))
     expect(hour8?.getAttribute('aria-label')).toContain('总计 3')
@@ -58,6 +58,8 @@ describe('HourlyActivityChart', () => {
     expect(screen.getAllByRole('table').length).toBeGreaterThan(0)
     expect(screen.getByText('8:00')).toBeTruthy()
     expect(document.querySelector('.hourly-table')?.textContent).toContain('不可用')
+
+    expect(document.querySelector('.hourly-scale-max')?.textContent).toBe('3')
   })
 
   it('exposes zero hours and known-zero providers as accessible zeros', () => {
@@ -66,18 +68,18 @@ describe('HourlyActivityChart', () => {
     })
     renderChart(activity)
 
-    const hour2 = screen.getAllByRole('img', { hidden: false }).find((bar) => bar.getAttribute('aria-label')?.includes('2:00'))
+    const hour2 = screen.getAllByRole('button', { hidden: false }).find((bar) => bar.getAttribute('aria-label')?.includes('2:00'))
     expect(hour2?.getAttribute('aria-label')).toContain('总计 0')
     expect(hour2?.getAttribute('aria-label')).toContain('Claude Code 0')
   })
 
-  it('shows focus and hover details for the active hour', () => {
+  it('shows focus, keyboard, and hover details for the active hour', () => {
     const activity = buckets({
       14: { totalInteractions: 5, byProvider: { 'claude-code': 3, codex: 0, hermes: 2 } }
     })
     renderChart(activity)
 
-    const hour14 = screen.getAllByRole('img', { hidden: false }).find((bar) => bar.getAttribute('aria-label')?.includes('14:00'))
+    const hour14 = screen.getAllByRole('button', { hidden: false }).find((bar) => bar.getAttribute('aria-label')?.includes('14:00'))
     expect(hour14).toBeDefined()
     if (hour14 === undefined) throw new Error('Expected an hour 14 bar')
     fireEvent.focus(hour14)
@@ -86,5 +88,14 @@ describe('HourlyActivityChart', () => {
     expect(detail?.textContent).toContain('14:00')
     expect(detail?.textContent).toContain('总计 5')
     expect(detail?.textContent).toContain('Hermes 2')
+
+    fireEvent.blur(hour14)
+    fireEvent.keyDown(hour14, { key: 'Enter' })
+    expect(document.querySelector('.hourly-detail')?.textContent).toContain('14:00')
+    fireEvent.keyDown(hour14, { key: ' ', code: 'Space' })
+    expect(document.querySelector('.hourly-detail')?.textContent).toContain('总计 5')
+
+    fireEvent.mouseEnter(screen.getAllByRole('button', { hidden: false })[8])
+    expect(document.querySelector('.hourly-detail')?.textContent).toContain('8:00')
   })
 })

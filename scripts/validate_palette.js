@@ -3,8 +3,8 @@
 
 const SURFACES = { light: '#FFFFFF', dark: '#27282E' }
 const PALETTES = {
-  light: ['#0A66D9', '#1E8E3E', '#C2410C'],
-  dark: ['#8CC2FF', '#7FD88F', '#F5A623']
+  light: ['#0A66D9', '#1E8E3E', '#C2410C', '#777985'],
+  dark: ['#8CC2FF', '#7FD88F', '#F5A623', '#777985']
 }
 
 function luminance(hex) {
