@@ -1,6 +1,6 @@
-:root{color:#202126;background:#F5F6F8;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;font-synthesis:none;text-rendering:optimizeLegibility;--canvas:#F5F6F8;--sidebar:#EAEBEF;--surface:#FFFFFF;--surface-subtle:#F7F7F9;--border:#DCDDE3;--text:#202126;--muted:#5D606A;--accent:#0A66D9;--accent-solid:#0A66D9;--accent-hover:#0859BE;--accent-soft:#E7F1FF;--danger:#8A3037;--danger-bg:#FFF2F3;--danger-border:#EDC9CD;--success:#35643C;--provider-claude-code:#0A66D9;--provider-codex:#1E8E3E;--provider-hermes:#C2410C;--hourly-unknown:#777985;--hover:#EFF0F3;--radius:10px;--radius-sm:8px;--radius-xs:6px;--ease:cubic-bezier(.2,.8,.2,1);--speed:.18s}
-[data-theme="light"]{--canvas:#F5F6F8;--sidebar:#EAEBEF;--surface:#FFFFFF;--surface-subtle:#F7F7F9;--border:#DCDDE3;--text:#202126;--muted:#5D606A;--accent:#0A66D9;--accent-solid:#0A66D9;--accent-hover:#0859BE;--accent-soft:#E7F1FF;--danger:#8A3037;--danger-bg:#FFF2F3;--danger-border:#EDC9CD;--success:#35643C;--provider-claude-code:#0A66D9;--provider-codex:#1E8E3E;--provider-hermes:#C2410C;--hourly-unknown:#777985;--hover:#EFF0F3}
-[data-theme="dark"]{--canvas:#191A1E;--sidebar:#202126;--surface:#27282E;--surface-subtle:#2D2E34;--border:#3B3C44;--text:#F0F0F3;--muted:#B2B3BD;--accent:#5AA7FF;--accent-solid:#287AD4;--accent-hover:#236CC0;--accent-soft:#24364A;--danger:#F1B4BA;--danger-bg:#3A272B;--danger-border:#654047;--success:#8FCB98;--provider-claude-code:#8CC2FF;--provider-codex:#7FD88F;--provider-hermes:#F5A623;--hourly-unknown:#8A8D97;--hover:#34363E}
+:root{color:#202126;background:#F5F6F8;color-scheme:light;accent-color:#0A66D9;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;font-synthesis:none;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;--canvas:#F5F6F8;--sidebar:#EAEBEF;--surface:#FFFFFF;--surface-subtle:#F7F7F9;--border:#DCDDE3;--text:#202126;--muted:#5D606A;--accent:#0A66D9;--accent-solid:#0A66D9;--accent-hover:#0859BE;--accent-soft:#E7F1FF;--danger:#8A3037;--danger-bg:#FFF2F3;--danger-border:#EDC9CD;--success:#35643C;--provider-claude-code:#0A66D9;--provider-codex:#1E8E3E;--provider-hermes:#C2410C;--hourly-unknown:#777985;--hover:#EFF0F3;--radius:10px;--radius-sm:8px;--radius-xs:6px;--ease:cubic-bezier(.2,.8,.2,1);--speed:.18s}
+[data-theme="light"]{color-scheme:light;accent-color:var(--accent-solid);--canvas:#F5F6F8;--sidebar:#EAEBEF;--surface:#FFFFFF;--surface-subtle:#F7F7F9;--border:#DCDDE3;--text:#202126;--muted:#5D606A;--accent:#0A66D9;--accent-solid:#0A66D9;--accent-hover:#0859BE;--accent-soft:#E7F1FF;--danger:#8A3037;--danger-bg:#FFF2F3;--danger-border:#EDC9CD;--success:#35643C;--provider-claude-code:#0A66D9;--provider-codex:#1E8E3E;--provider-hermes:#C2410C;--hourly-unknown:#777985;--hover:#EFF0F3}
+[data-theme="dark"]{color-scheme:dark;accent-color:var(--accent-solid);--canvas:#191A1E;--sidebar:#202126;--surface:#27282E;--surface-subtle:#2D2E34;--border:#3B3C44;--text:#F0F0F3;--muted:#B2B3BD;--accent:#5AA7FF;--accent-solid:#287AD4;--accent-hover:#236CC0;--accent-soft:#24364A;--danger:#F1B4BA;--danger-bg:#3A272B;--danger-border:#654047;--success:#8FCB98;--provider-claude-code:#8CC2FF;--provider-codex:#7FD88F;--provider-hermes:#F5A623;--hourly-unknown:#8A8D97;--hover:#34363E}
 *{box-sizing:border-box}
 body{margin:0;min-width:320px;min-height:100vh;background:var(--canvas)}
 button,select,input{font:inherit}
@@ -28,8 +28,8 @@ button:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(
 .page-content{width:min(860px,100%);margin:0 auto;padding:34px 44px 60px}
 .page-header{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:54px;margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid var(--border)}
 .section-label{margin:0 0 5px;color:var(--muted);font-size:11px;letter-spacing:.05em}
-.page-header h1{margin:0;color:var(--text);font-size:26px;font-weight:700;letter-spacing:-.03em}
-.page-header p:not(.section-label){margin:6px 0 0;color:var(--muted);font-size:12px}
+.page-header h1{margin:0;color:var(--text);font-size:26px;font-weight:700;letter-spacing:-.03em;text-wrap:balance}
+.page-header p:not(.section-label){margin:6px 0 0;color:var(--muted);font-size:12px;line-height:1.5}
 .primary-button{min-height:38px;padding:0 16px;border:0;border-radius:var(--radius-sm);color:#fff;background:var(--accent-solid);font-size:12.5px;font-weight:600;white-space:nowrap;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.08);transition:background-color var(--speed) var(--ease),box-shadow var(--speed) var(--ease),transform var(--speed) var(--ease)}
 .primary-button:hover{background:var(--accent-hover);box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .primary-button:active{transform:translateY(1px) scale(.98)}
@@ -53,7 +53,7 @@ button:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(
 .panel{margin-bottom:16px;padding:0 20px}
 .panel-heading{display:flex;align-items:flex-start;justify-content:space-between;padding:18px 0 13px}
 .panel-heading h2{margin:0;font-size:14px;font-weight:650;letter-spacing:-.01em}
-.panel-heading p{margin:4px 0 0;color:var(--muted);font-size:12px}
+.panel-heading p{margin:4px 0 0;color:var(--muted);font-size:12px;line-height:1.5}
 .panel-heading>span{color:var(--muted);font-size:11px}
 .provider-list,.session-list,.settings-list{border-top:1px solid var(--border)}
 .provider-row{display:grid;grid-template-columns:minmax(160px,1fr) minmax(330px,1.5fr);align-items:center;gap:20px;min-height:64px;border-bottom:1px solid var(--border);transition:background-color var(--speed) var(--ease)}
@@ -170,7 +170,7 @@ button:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(
 .menu-summary span{color:var(--muted);font-size:12px}
 .menu-summary p{color:var(--muted);font-size:12px}
 .open-client-button{width:100%;min-height:40px;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);background:var(--surface);font-weight:560;cursor:pointer;transition:background-color var(--speed) var(--ease),transform var(--speed) var(--ease)}
-.open-client-button:hover{background:var(--surface-subtle)}
+.open-client-button:hover{background:var(--hover)}
 .open-client-button:active{transform:translateY(1px) scale(.98)}
 .menu-notice{margin:15px 0 0;color:var(--muted);font-size:10px;line-height:1.45}
 .menu-app .refresh-feedback{margin:12px 0 0;padding:8px 11px;font-size:11px}
