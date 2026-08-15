@@ -9,7 +9,7 @@ const complete=(overrides:Partial<CompletedRefreshReport>={}):CompletedRefreshRe
 function api(report:RefreshReport=complete(),overrides:Partial<RendererApi>={}):RendererApi{return{getToday:vi.fn(async()=>({ok:true,value:today})),refreshNow:vi.fn(async()=>({ok:true,value:report})),getSettings:vi.fn(),updateSettings:vi.fn(),openClient:vi.fn(async()=>({ok:true,value:undefined})),onRefreshState:vi.fn(()=>()=>undefined),...overrides}}
 afterEach(cleanup)
 
-async function refreshAndExpect(report:RefreshReport,text:RegExp){const bridge=api(report);window.tokenActivityShow=bridge;render(<TodayPage/>);await screen.findByText('历史数据不足');fireEvent.click(screen.getByRole('button',{name:'立即刷新'}));expect(await screen.findByText(text)).toBeTruthy();expect(bridge.getToday).toHaveBeenCalledTimes(2)}
+async function refreshAndExpect(report:RefreshReport,text:RegExp){const bridge=api(report);window.tokenActivityShow=bridge;render(<TodayPage/>);await screen.findByText('历史数据不足');fireEvent.click(screen.getByRole('button',{name:'立即刷新'}));const feedback=(await screen.findByText(text)).closest('.refresh-feedback');expect(feedback).not.toBeNull();expect(bridge.getToday).toHaveBeenCalledTimes(2)}
 
 describe('TodayPage',()=>{
  it('renders objective counts and unavailable metrics',async()=>{window.tokenActivityShow=api();render(<TodayPage/>);expect(await screen.findByText('历史数据不足')).toBeTruthy();expect(screen.getByText('2')).toBeTruthy();expect(screen.getAllByText('不可用').length).toBeGreaterThan(2)})
@@ -21,5 +21,5 @@ describe('TodayPage',()=>{
   [complete({failed:1,succeeded:0,providerResults:[{providerId:'claude-code',status:'failed',inserted:0,updated:0,unchanged:0,warningCodes:[]}]}),/部分来源刷新失败/],
   [{status:'failed',trigger:'manual',reason:'private path'} as RefreshReport,/刷新失败/]
  ])('reports refresh outcome and always refetches %#',refreshAndExpect)
- it('refetches and restores the button after a thrown bridge error',async()=>{const bridge=api(complete(),{refreshNow:vi.fn(async()=>{throw new Error('/private/path')})});window.tokenActivityShow=bridge;render(<TodayPage/>);await screen.findByText('历史数据不足');fireEvent.click(screen.getByRole('button',{name:'立即刷新'}));expect((await screen.findByRole('alert')).textContent).toContain('刷新失败');await waitFor(()=>expect(bridge.getToday).toHaveBeenCalledTimes(2));expect((screen.getByRole('button',{name:'立即刷新'}) as HTMLButtonElement).disabled).toBe(false);expect(document.body.textContent).not.toContain('/private/path')})
+ it('refetches and restores the button after a thrown bridge error',async()=>{const bridge=api(complete(),{refreshNow:vi.fn(async()=>{throw new Error('/private/path')})});window.tokenActivityShow=bridge;render(<TodayPage/>);await screen.findByText('历史数据不足');fireEvent.click(screen.getByRole('button',{name:'立即刷新'}));const alert=(await screen.findByRole('alert'));expect(alert.textContent).toContain('刷新失败');expect(alert.className).toContain('refresh-feedback');await waitFor(()=>expect(bridge.getToday).toHaveBeenCalledTimes(2));expect((screen.getByRole('button',{name:'立即刷新'}) as HTMLButtonElement).disabled).toBe(false);expect(document.body.textContent).not.toContain('/private/path')})
 })
