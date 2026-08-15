@@ -39,6 +39,7 @@ export async function parseClaudeCodeFile(filePath: string, projectName: string 
   const warnings: SourceWarning[] = []
   const ids = new Set<string>()
   const timestamps: number[] = []
+  const interactionEvents: string[] = []
   const structuralHash = createHash('sha256')
   let interactions = 0
   let bytes = 0
@@ -71,7 +72,12 @@ export async function parseClaudeCodeFile(filePath: string, projectName: string 
         if (Number.isFinite(parsed)) timestamps.push(parsed)
       }
       const meta = record.isMeta === true || record.isCompactSummary === true || record.isSnapshotUpdate === true
-      if (record.type === 'user' && !meta && (text(record.message) ?? text(record.content))) interactions += 1
+      if (record.type === 'user' && !meta && (text(record.message) ?? text(record.content))) {
+        interactions += 1
+        if (typeof record.timestamp === 'string' && Number.isFinite(Date.parse(record.timestamp))) {
+          interactionEvents.push(record.timestamp)
+        }
+      }
     }
   } catch {
     warnings.push({ code: 'READ_ERROR', message: 'A session file could not be fully read.' })
@@ -97,9 +103,10 @@ export async function parseClaudeCodeFile(filePath: string, projectName: string 
       workingDirectory: null,
       model: null,
       interactionCount: interactions,
+      interactionEvents: [...interactionEvents].sort(),
       tokenUsage: null,
       activeDurationSeconds: null,
-      contentVersion: contentVersion([sourceSessionId, startedAt, updatedAt, String(interactions), structuralHash.digest('hex')])
+      contentVersion: contentVersion([sourceSessionId, startedAt, updatedAt, String(interactions), ...interactionEvents, structuralHash.digest('hex')])
     },
     warnings
   }

@@ -14,6 +14,7 @@ const sessions: NormalizedSession[] = [
     workingDirectory: null,
     model: null,
     interactionCount: 3,
+    interactionEvents: ['2026-08-02T09:01:00.000Z', '2026-08-02T09:02:00.000Z', '2026-08-02T09:03:00.000Z'],
     tokenUsage: null,
     activeDurationSeconds: null,
     contentVersion: 'evidenced-v1-one'
@@ -28,6 +29,7 @@ const sessions: NormalizedSession[] = [
     workingDirectory: null,
     model: null,
     interactionCount: 4,
+    interactionEvents: ['2026-08-02T10:01:00.000Z', '2026-08-02T10:02:00.000Z', '2026-08-02T10:03:00.000Z', '2026-08-02T10:04:00.000Z'],
     tokenUsage: null,
     activeDurationSeconds: null,
     contentVersion: 'evidenced-v1-two'

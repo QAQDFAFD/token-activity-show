@@ -1,5 +1,6 @@
 import type {
   DailyMetrics,
+  HourlyActivity,
   NormalizedSession,
   ProviderId,
   SourceSettings
@@ -47,6 +48,7 @@ export interface TodayViewModel {
   refreshState?: RefreshState
   overall?: Omit<DailyMetrics, 'date' | 'providerId' | 'capabilities'>
   providers?: readonly ProviderTodayMetrics[]
+  hourlyActivity?: readonly HourlyActivity[]
   recentSessions?: readonly NormalizedSession[]
   intensity?: TodayIntensity
   metricAvailability?: {

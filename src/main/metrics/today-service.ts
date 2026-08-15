@@ -4,6 +4,7 @@ import type { GetTodayInput } from '../../shared/schemas'
 import type { MetricsRepository } from '../db/metrics-repository'
 import type { SessionRepository } from '../db/session-repository'
 import { aggregateDay } from './aggregate-day'
+import { aggregateHourlyActivity } from './aggregate-hourly'
 import { calculateIntensity, type IntensityDay } from './intensity'
 
 export interface TodayServiceDependencies {
@@ -105,6 +106,11 @@ export class TodayService {
         tokenUsage: record.tokenUsage,
         activeDurationSeconds: record.activeDurationSeconds
       })),
+      hourlyActivity: aggregateHourlyActivity(
+        todaySessions,
+        input.localDate,
+        input.timeZone
+      ),
       recentSessions: [...todaySessions]
         .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
         .slice(0, 10),

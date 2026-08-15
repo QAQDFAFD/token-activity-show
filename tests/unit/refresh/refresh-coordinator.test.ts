@@ -6,7 +6,7 @@ import { RefreshCoordinator } from '../../../src/main/refresh/refresh-coordinato
 
 const settings: SourceSettings = { enabledSources: { 'claude-code': true, codex: true, hermes: false }, refreshIntervalMinutes: 10 }
 const capabilities = { interactions: false, tokens: false, activeDuration: false, model: false, trustworthyQuota: false }
-const session = (providerId: 'claude-code' | 'codex'): NormalizedSession => ({ id: `${providerId}:one`, providerId, sourceSessionId: 'one', startedAt: '2026-08-02T00:00:00.000Z', updatedAt: '2026-08-02T00:01:00.000Z', projectName: null, workingDirectory: null, model: null, interactionCount: null, tokenUsage: null, activeDurationSeconds: null, contentVersion: 'v1' })
+const session = (providerId: 'claude-code' | 'codex'): NormalizedSession => ({ id: `${providerId}:one`, providerId, sourceSessionId: 'one', startedAt: '2026-08-02T00:00:00.000Z', updatedAt: '2026-08-02T00:01:00.000Z', projectName: null, workingDirectory: null, model: null, interactionCount: null, interactionEvents: [], tokenUsage: null, activeDurationSeconds: null, contentVersion: 'v1' })
 const result = (overrides: Partial<SourceScanResult> = {}): SourceScanResult => ({ sessions: [], warnings: [], capabilities, fingerprint: 'v1', ...overrides })
 function source(providerId: ProviderId, scan: SessionSource['scan']): SessionSource { return { providerId, detect: vi.fn(), scan } }
 

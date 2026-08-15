@@ -34,6 +34,7 @@ function session(
     workingDirectory: null,
     model: null,
     interactionCount: null,
+    interactionEvents: [],
     tokenUsage: null,
     activeDurationSeconds: null,
     contentVersion: 'version-1',

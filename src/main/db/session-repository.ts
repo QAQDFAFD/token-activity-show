@@ -15,12 +15,24 @@ interface SessionRow {
   working_directory: string | null
   model: string | null
   interaction_count: number | null
+  interaction_events: string
   token_usage: number | null
   active_duration_seconds: number | null
   content_version: string
 }
 
 const UTC_DATE_START = 'T00:00:00.000Z'
+
+function parseEvents(serialized: string): readonly string[] {
+  try {
+    const parsed: unknown = JSON.parse(serialized)
+    return Array.isArray(parsed)
+      ? parsed.filter((value): value is string => typeof value === 'string')
+      : []
+  } catch {
+    return []
+  }
+}
 
 function rowToSession(row: SessionRow): NormalizedSession {
   return {
@@ -33,6 +45,7 @@ function rowToSession(row: SessionRow): NormalizedSession {
     workingDirectory: row.working_directory,
     model: row.model,
     interactionCount: row.interaction_count,
+    interactionEvents: parseEvents(row.interaction_events),
     tokenUsage: row.token_usage,
     activeDurationSeconds: row.active_duration_seconds,
     contentVersion: row.content_version
@@ -74,11 +87,11 @@ export class SessionRepository {
     this.insert = database.prepare(`
       INSERT INTO sessions (
         id, provider_id, source_session_id, started_at, updated_at, project_name,
-        working_directory, model, interaction_count, token_usage,
+        working_directory, model, interaction_count, interaction_events, token_usage,
         active_duration_seconds, content_version
       ) VALUES (
         @id, @providerId, @sourceSessionId, @startedAt, @updatedAt, @projectName,
-        @workingDirectory, @model, @interactionCount, @tokenUsage,
+        @workingDirectory, @model, @interactionCount, @interactionEventsJson, @tokenUsage,
         @activeDurationSeconds, @contentVersion
       )
     `)
@@ -92,6 +105,7 @@ export class SessionRepository {
         working_directory = @workingDirectory,
         model = @model,
         interaction_count = @interactionCount,
+        interaction_events = @interactionEventsJson,
         token_usage = @tokenUsage,
         active_duration_seconds = @activeDurationSeconds,
         content_version = @contentVersion
@@ -105,14 +119,43 @@ export class SessionRepository {
     this.upsertTransaction = database.transaction((sessions) => {
       const result: UpsertResult = { inserted: 0, updated: 0, unchanged: 0 }
       for (const session of sessions) {
+        const {
+          id,
+          providerId,
+          sourceSessionId,
+          startedAt,
+          updatedAt,
+          projectName,
+          workingDirectory,
+          model,
+          interactionCount,
+          tokenUsage,
+          activeDurationSeconds,
+          contentVersion
+        } = session
+        const row = {
+          id,
+          providerId,
+          sourceSessionId,
+          startedAt,
+          updatedAt,
+          projectName,
+          workingDirectory,
+          model,
+          interactionCount,
+          interactionEventsJson: JSON.stringify(session.interactionEvents),
+          tokenUsage,
+          activeDurationSeconds,
+          contentVersion
+        }
         const existing = this.selectContentVersion.get(session.id)
         if (existing === undefined) {
-          this.insert.run(session)
+          this.insert.run(row)
           result.inserted += 1
         } else if (existing.content_version === session.contentVersion) {
           result.unchanged += 1
         } else {
-          this.update.run(session)
+          this.update.run(row)
           result.updated += 1
         }
       }

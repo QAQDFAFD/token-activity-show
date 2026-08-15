@@ -50,6 +50,12 @@ const migrations: readonly Migration[] = [
         value_json TEXT NOT NULL
       );
     `
+  },
+  {
+    version: 2,
+    statements: `
+      ALTER TABLE sessions ADD COLUMN interaction_events TEXT NOT NULL DEFAULT '[]';
+    `
   }
 ]
 

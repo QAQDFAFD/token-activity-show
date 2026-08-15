@@ -20,9 +20,16 @@ export interface NormalizedSession {
   workingDirectory: string | null
   model: string | null
   interactionCount: number | null
+  interactionEvents: readonly string[]
   tokenUsage: number | null
   activeDurationSeconds: number | null
   contentVersion: string
+}
+
+export interface HourlyActivity {
+  hour: number
+  totalInteractions: number | null
+  byProvider: Record<ProviderId, number | null>
 }
 
 export interface DailyMetrics {

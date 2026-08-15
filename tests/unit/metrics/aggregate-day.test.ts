@@ -13,6 +13,7 @@ function session(overrides: Partial<NormalizedSession> = {}): NormalizedSession 
     workingDirectory: null,
     model: null,
     interactionCount: null,
+    interactionEvents: [],
     tokenUsage: null,
     activeDurationSeconds: null,
     contentVersion: 'v1',

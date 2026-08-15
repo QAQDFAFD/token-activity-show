@@ -49,7 +49,13 @@ describe('openDatabase', () => {
       second
         .prepare('SELECT version FROM schema_migrations ORDER BY version')
         .all()
-    ).toEqual([{ version: 1 }])
+    ).toEqual([{ version: 1 }, { version: 2 }])
+    expect(
+      second
+        .prepare("PRAGMA table_info('sessions')")
+        .all()
+        .some((column) => (column as { name: string }).name === 'interaction_events')
+    ).toBe(true)
     second.close()
   })
 })
