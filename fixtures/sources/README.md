@@ -32,6 +32,12 @@ The probe must never output JSON values, real nested directory or file names, me
 
 Create the smallest fixture that preserves the observed container and field structure. Replace every path, ID, project name, timestamp value, model response, prompt, and other free text with synthetic placeholders. Delete fields unrelated to metadata ingestion. Review the complete fixture diff before committing it.
 
+Current evidenced fixtures:
+
+- Claude Code: nested `<project>/<session>.jsonl`
+- Codex: dated `<year>/<month>/<day>/<session>.jsonl` with `session_meta` / `response_item` / `event_msg` / `turn_context` envelopes
+- Hermes: `state.db` (`sessions` + `messages`) is the current native store; legacy `*.jsonl` transcripts and `session_*.json` documents are fallbacks; `request_dump_*.json` is ignored
+
 If a reliable format is not detected, create `fixtures/sources/<provider>/unsupported.json` containing only:
 
 ```json

@@ -1,0 +1,8 @@
+{"timestamp":"2026-01-01T00:00:00.000Z","type":"session_meta","payload":{"id":"generic-session","cwd":"/tmp/generic-project","originator":"codex","cli_version":"0.0.0","source":"cli","model_provider":"openai"}}
+{"timestamp":"2026-01-01T00:00:30.000Z","type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"<environment_context>\ngeneric environment\n</environment_context>"}]}}
+{"timestamp":"2026-01-01T00:01:00.000Z","type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"generic request"}]}}
+{"timestamp":"2026-01-01T00:02:00.000Z","type":"response_item","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"PRIVATE_SENTINEL_DO_NOT_PERSIST"}]}}
+{"timestamp":"2026-01-01T00:03:00.000Z","type":"turn_context","payload":{"turn_id":"turn-1","cwd":"/tmp/generic-project","model":"generic-model","approval_policy":"never"}}
+{"timestamp":"2026-01-01T00:04:00.000Z","type":"event_msg","payload":{"type":"token_count","info":{"last_token_usage":{"input_tokens":11,"cached_input_tokens":0,"output_tokens":7,"reasoning_output_tokens":0,"total_tokens":18},"total_token_usage":{"input_tokens":11,"cached_input_tokens":0,"output_tokens":7,"reasoning_output_tokens":0,"total_tokens":18},"model_context_window":128000}}}
+not-json
+{"timestamp":"2026-01-01T00:05:00.000Z","type":"response_item","payload":{"type":"function_call","name":"generic_tool","arguments":"{}"}}

@@ -2,7 +2,7 @@
 
 Token Activity Show 是一款面向 macOS 的本地桌面应用，用于汇总 Claude Code、OpenAI Codex 和 Nous Research Hermes Agent 的原生会话活动。
 
-> 当前项目仍处于开发阶段。真实会话格式尚未建立，三个来源目前会明确返回 `FORMAT_NOT_ESTABLISHED`，不会猜测数据格式或伪造统计结果。
+> 当前项目仍处于开发阶段。Claude Code、Codex 和 Hermes 会读取本机已证实的会话元数据；缺失指标显示为未知，而不是零。
 
 ## 功能与原则
 
@@ -89,8 +89,7 @@ pnpm package:mac
 
 ## 当前限制
 
-- Claude Code、Codex 和 Hermes 的真实本地会话格式尚未通过脱敏 fixture 建立。
-- 三个来源当前返回 `FORMAT_NOT_ESTABLISHED`，因此暂时不会产生真实活动统计。
+- 当前只汇总已证实的会话元数据（会话数、有效互动、以及来源提供的 token/模型字段），不会读取或保存对话正文。
 - 当前只面向 macOS；Windows 支持尚未实现。
 - 不包含 AI 摘要、云同步、quota 推测、后台 daemon 或对话内容分析。
 - macOS 安装产物尚未签名或 notarize，不适合直接公开发布。
@@ -139,4 +138,4 @@ pnpm exec install-electron
 
 ### 为什么页面没有真实统计数据？
 
-当前 source adapter 只支持已经由真实、脱敏 fixture 证明的格式。由于三个目标工具的格式尚未建立，应用会报告 `FORMAT_NOT_ESTABLISHED`，而不是猜测字段或将未知指标显示为零。
+请先确认设置里已启用来源，然后点击「立即刷新」。应用只展示能够从本机会话文件验证的元数据；某个来源未安装、目录为空，或缺少某项指标时，会显示未知而不是零。

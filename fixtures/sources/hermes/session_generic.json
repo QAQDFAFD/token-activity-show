@@ -1,0 +1,16 @@
+{
+  "session_id": "generic-session",
+  "model": "generic-model",
+  "platform": "cli",
+  "base_url": "https://example.invalid",
+  "session_start": "2026-01-01T00:00:00.000Z",
+  "last_updated": "2026-01-01T00:05:00.000Z",
+  "system_prompt": "PRIVATE_SENTINEL_DO_NOT_PERSIST",
+  "tools": [],
+  "message_count": 3,
+  "messages": [
+    { "role": "user", "content": "generic request" },
+    { "role": "assistant", "content": "generic response", "reasoning": "PRIVATE_SENTINEL_DO_NOT_PERSIST" },
+    { "role": "tool", "content": "generic tool output", "tool_call_id": "call-1" }
+  ]
+}

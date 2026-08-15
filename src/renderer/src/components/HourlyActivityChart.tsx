@@ -21,7 +21,7 @@ export function HourlyActivityChart({ activity }: { activity: readonly HourlyAct
   const hourText = (hour: number) => t('hourLabel', { hour: String(hour) })
 
   if (activity.length !== 24 || activity.every((bucket) => bucket.totalInteractions === null)) {
-    return <section className="panel" aria-labelledby="hourly-title"><div className="panel-heading"><h2 id="hourly-title">{t('hourlyActivity')}</h2></div><p className="hourly-unavailable">{t('hourlyUnavailableState')}</p><p className="muted">{t('hourlyUnavailableDescription')}</p></section>
+    return <section className="panel hourly-panel" aria-labelledby="hourly-title"><div className="panel-heading"><h2 id="hourly-title">{t('hourlyActivity')}</h2></div><p className="hourly-unavailable">{t('hourlyUnavailableState')}</p><p className="muted">{t('hourlyUnavailableDescription')}</p></section>
   }
 
   const max = Math.max(1, ...activity.map((bucket) => bucket.totalInteractions ?? 0))

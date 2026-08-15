@@ -31,7 +31,7 @@ The E2E evidenced sessions are synthetic, metadata-only integration evidence. Th
 
 ## Local source probing and privacy
 
-Provider discovery probes local source roots read-only. It must not modify provider files, persist conversation bodies, send source data over the network, or infer quota from activity. Current Claude Code, Codex, and Hermes formats have not been established; detected unsupported data remains visibly reported as `FORMAT_NOT_ESTABLISHED` rather than being guessed or silently parsed.
+Provider discovery probes local source roots read-only. It must not modify provider files, persist conversation bodies, send source data over the network, or infer quota from activity. Claude Code, Codex, and Hermes adapters parse only fixture-evidenced metadata. Missing directories report `NOT_INSTALLED`; empty roots report `FORMAT_NOT_ESTABLISHED`. Unknown metrics stay null.
 
 ## Unsigned macOS packaging
 
