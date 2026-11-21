@@ -1,4 +1,8 @@
-.superpowers/
+.build/
+dist/
+.DS_Store
+*.xcuserstate
+.swiftpm/
 node_modules/
 out/
 release/

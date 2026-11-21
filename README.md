@@ -1,141 +1,177 @@
-# Token Activity Show
+# TokenBar
 
-Token Activity Show 是一款面向 macOS 的本地桌面应用，用于汇总 Claude Code、OpenAI Codex 和 Nous Research Hermes Agent 的原生会话活动。
+一个只活在 macOS 菜单栏里的 AI 订阅额度查看器。自动读取本机已登录的 AI 编码工具，显示会话、每周、每月额度和重置时间。
 
-> 当前项目仍处于开发阶段。Claude Code、Codex 和 Hermes 会读取本机已证实的会话元数据；缺失指标显示为未知，而不是零。
+> 纯原生 Swift / AppKit + SwiftUI，无 Dock 图标、无主窗口、无数据库、无云同步。点击菜单栏图标查看额度弹窗。
 
-## 功能与原则
+## 支持的本机订阅
 
-- 本地发现和保存编码代理会话元数据
-- 按来源隔离 Claude Code、Codex 和 Hermes 会话
-- 不读取或保存对话正文
-- 缺失指标显示为未知，而不是零
-- 自动刷新仅在应用运行期间执行，默认间隔为 10 分钟
-- Electron renderer 无法直接访问文件系统或 SQLite
+| 来源 | 自动读取的本地凭据 | 额度接口 |
+| --- | --- | --- |
+| Claude Code | `~/.claude/.credentials.json` 或 tokenbar 配置文件 | `api.anthropic.com/api/oauth/usage` |
+| OpenAI Codex | `~/.codex/auth.json` | `chatgpt.com/backend-api/wham/usage` |
+| Antigravity | `agy` CLI 本地登录（PATH 或 `ANTIGRAVITY_CLI_PATH`） | 本机执行 `agy -p /usage --output-format json` |
+| Cursor | `~/Library/Application Support/Cursor/User/globalStorage/state.vscdb` | `cursor.com/api/usage-summary` |
+| GitHub Copilot | `GH_TOKEN` / `GITHUB_TOKEN`、`~/.config/gh/hosts.yml` 或 tokenbar 配置文件 | `api.github.com/copilot_internal/user` |
+| Kimi Code | `~/.kimi-code/credentials/kimi-code.json` | `api.kimi.com/coding/v1/usages` |
+| Nous Portal | `~/.hermes/auth.json`、`~/.hermes/shared/nous_auth.json` | `portal.nousresearch.com/api/oauth/account` |
+| Windsurf | `~/Library/Application Support/Windsurf/.../state.vscdb` 本地缓存 | 无网络请求 |
 
-## 环境要求
+登录哪个工具，菜单栏就显示哪个；未登录的来源会自动隐藏。若一个都没检测到，弹窗会列出对应的登录命令。
 
-- macOS
-- Node.js 22.12.0 或更高版本，推荐 `22.23.1`
-- pnpm `10.17.1`
+## 界面
 
-检查版本：
+- **菜单栏**：动态小柱状图 + 当前最高已用 / 最低剩余百分比（跟随视角）。已用超过 90% 变红。悬停可看所有来源。
+- **菜单栏配置**：齿轮 →「菜单栏显示…」，三根柱子和右侧百分比可分别选择「自动」或具体来源/窗口；“自动”会按额度紧张程度填充。
+- **左键弹窗**：右上角切换「剩余 / 已用」视角（默认剩余）；按来源显示套餐、各额度窗口、百分比、重置倒计时、余额/额外用量。
+- **右键菜单**：刷新、刷新间隔（1/5/15/30/60 分钟）、开机启动、退出。
+- **刷新**：每次打开弹窗都会重新拉取数据；默认每 5 分钟自动刷新；从睡眠唤醒后自动刷新。
+- 没有任何设置窗口。登录状态由各工具自己的 CLI/App 管理。
 
-```bash
-node --version
-pnpm --version
-```
+## 构建与运行
 
-## 安装
-
-```bash
-pnpm install
-```
-
-## 开发运行
+要求 macOS 14+、Swift 6.0+（Xcode 16+）。
 
 ```bash
-pnpm dev
+swift build
+swift run TokenBar
 ```
 
-该命令会启动 Electron 开发环境并打开 Token Activity Show 窗口。关闭应用窗口即可结束本次运行。
-
-## 测试与质量检查
+打包成 `.app`（菜单栏应用，无 Dock 图标）：
 
 ```bash
-pnpm test
-pnpm test:unit
-pnpm typecheck
-pnpm lint
+./scripts/package_app.sh
+open dist/TokenBar.app
 ```
 
-提交变更前建议执行：
+### 命令行探测
+
+用于确认本机检测和额度接口是否正常。**不会输出 token、邮箱或对话内容**：
 
 ```bash
-pnpm typecheck && pnpm lint && pnpm test && pnpm build
+swift run TokenBar --probe
+swift run TokenBar --probe --json
+swift run TokenBar --probe --provider codex
+swift run TokenBar --dump
 ```
 
-## 生产构建
+## 配置文件（可选）
 
-```bash
-pnpm build
+TokenBar **不读取 macOS 钥匙串**，因此不会出现系统授权弹窗。若某个工具的凭据只在钥匙串里（常见于 Claude Code 和 `gh`），可以把它写进普通配置文件：
+
+`~/.config/tokenbar/config.json`（或 `$XDG_CONFIG_HOME/tokenbar/config.json`）
+
+示例见 [`config.example.json`](config.example.json)。
+
+```json
+{
+  "claudeAccessToken": "sk-ant-oat...",
+  "claudeRefreshToken": "...",
+  "githubToken": "gho_...",
+  "kimiAccessToken": "...",
+  "nousAccessToken": "..."
+}
 ```
 
-构建结果位于 `out/`：
+- 只需要填你要用的字段，其余可省略。
+- 文件里是明文 token，建议 `chmod 600 ~/.config/tokenbar/config.json`。
+- Copilot：先在终端运行 `gh auth token`，把输出粘贴为 `githubToken`。
+- Claude：如果 `~/.claude/.credentials.json` 不存在，可以把 Claude Code OAuth 登录信息中的 access token 填入 `claudeAccessToken`；TokenBar 不会从钥匙串读取它。
+- 修改配置后点击菜单栏弹窗里的刷新按钮即可，无需重启。
 
-- `out/main/`
-- `out/preload/`
-- `out/renderer/`
+## 权限与隐私
 
-## macOS 本地打包
-
-```bash
-pnpm package:mac
-```
-
-当前打包配置用于本地生成未签名的 macOS 安装产物，不包含 Apple Developer 签名或 notarization 配置。
-
-## 命令速查
-
-| 命令 | 用途 |
-| --- | --- |
-| `pnpm dev` | 启动 Electron 开发环境 |
-| `pnpm test` | 运行全部测试 |
-| `pnpm test:unit` | 运行单元测试 |
-| `pnpm typecheck` | 运行 TypeScript 类型检查 |
-| `pnpm lint` | 运行 ESLint |
-| `pnpm build` | 创建生产构建 |
-| `pnpm package:mac` | 构建并打包 macOS 应用 |
+- 只读取已知文件、环境变量和 tokenbar 配置文件，不遍历磁盘、不读取浏览器 Cookie、不读取对话正文。
+- **TokenBar 不读取 macOS 钥匙串**，不会触发 TokenBar 自己的钥匙串授权弹窗。
+- Antigravity 通过官方 `agy` CLI 读取额度；`agy` 自己的登录凭据由 Antigravity 管理，TokenBar 不读取、不改写。
+- 网络请求只发往各服务商的官方额度接口；不发送提示词、回复、文件内容或会话日志。
+- 刷新得到的 Claude OAuth 令牌只缓存在 `~/Library/Application Support/TokenBar/credentials.json`，文件权限 `0600`，目录 `0700`；不会回写 Claude Code 自己的凭据文件。
+- Kimi、Codex、Copilot、Cursor 的凭据只读，TokenBar 不刷新、不改写。
+- 无遥测、无云同步、无后台 daemon。
+- 所有额度查询使用各产品自己的非公开/半公开接口，服务商调整后可能失效；这不是官方 API。
 
 ## 当前限制
 
-- 当前只汇总已证实的会话元数据（会话数、有效互动、以及来源提供的 token/模型字段），不会读取或保存对话正文。
-- 当前只面向 macOS；Windows 支持尚未实现。
-- 不包含 AI 摘要、云同步、quota 推测、后台 daemon 或对话内容分析。
-- macOS 安装产物尚未签名或 notarize，不适合直接公开发布。
+- **Claude Code / GitHub Copilot**：macOS 上这两个工具的凭据默认放在钥匙串。为避免反复弹出系统授权，TokenBar **不读取钥匙串**；请把 token 写入 `~/.config/tokenbar/config.json`（见上文），或使用已有的普通凭据文件。
+- **Antigravity**：通过 `agy -p /usage --output-format json` 读取额度；需要先在终端运行 `agy` 登录。TokenBar 会禁用 `agy` 的自动更新，并在未登录时阻止它自动打开浏览器。`agy` 冷启动约 5–8 秒，弹窗会先显示上次数据，刷新完成后再更新。
+- **Cursor**：目前支持明文 JWT 登录令牌；Cursor 新版本的 `cursor-safe-storage:` 加密令牌暂不支持，会提示重新登录。
+- **Kimi Code**：CLI 的 access token 很短（约 15 分钟）。TokenBar 不会刷新它（避免让 CLI 的 refresh token 失效）；过期后运行一次 `kimi` 即可。
+- **Windsurf**：只读本地缓存，数据可能不是最新；需要先在 Windsurf 中登录并启动过一次。
+- **Nous Portal**：access token 约 1 小时有效；过期后运行一次 `hermes` 命令刷新。
+- 暂未支持：Zed、OpenCode Go、JetBrains AI、Qwen、MiniMax、z.ai 等。架构上可以继续加 provider。
+- 未做代码签名和 notarization；`dist/TokenBar.app` 仅适合本机使用。
 
-## 隐私与安全
+## 测试与质量检查
 
-Token Activity Show 采用本地优先设计：
+所有改动都必须通过对应测试；完整规则见 [`AGENTS.md`](AGENTS.md)。
 
-- 收集的数据保存在本机 SQLite 数据库中。
-- 不读取或保存 prompt、回复和其他对话正文。
-- 不读取浏览器 cookie，不拦截网络流量，也不调用未公开的私有 API。
-- Electron 使用 `contextIsolation: true`、`nodeIntegration: false` 和 sandbox。
-- renderer 仅能通过经过校验的白名单 IPC API 请求数据。
+| 场景 | 命令 |
+| --- | --- |
+| 全部 Swift 测试 | `swift test` / `make test` |
+| 单元、解析、配置测试 | `swift test --skip EndToEndTests` / `make test-unit` |
+| 全链路 E2E | `swift test --filter EndToEndTests` / `make test-e2e` |
+| 菜单栏配置解析 | `swift test --filter MenuBarLayoutTests` |
+| 完整门禁（测试 + 打包 + 隔离 HOME 冒烟） | `./scripts/e2e.sh` / `make e2e` |
 
-## 常见问题
+E2E 测试使用临时 HOME、隔离的 SQLite 数据库、模拟 HTTP 响应和 fake `agy` CLI，覆盖：
 
-### `better-sqlite3` 加载失败或 Node 进程崩溃
+`本地凭据 → 8 个来源的检测 → HTTP/CLI 拉取 → 解析 → UsageStore 刷新 → 菜单栏三柱/百分比解析 → 配置持久化`
 
-确认正在使用 Node.js 22.23.1：
+不会读取真实 token 或真实会话数据。Fixture 位于 `Tests/TokenBarCoreTests/EndToEndTests.swift`。CI 配置位于 `.github/workflows/tests.yml`。
 
-```bash
-node --version
-```
-
-如果版本不正确，请切换 Node 版本后重新安装依赖：
-
-```bash
-rm -rf node_modules
-pnpm install
-```
-
-### Electron 启动时报 `Error: Electron uninstall`
-
-该错误表示 Electron npm 包存在，但 Electron.app 二进制未安装。先确认 Node.js 至少为 22.12.0，然后重新运行安装流程：
+改动后至少执行：
 
 ```bash
-node --version
-pnpm install
+swift test
 ```
 
-项目的 `postinstall` 脚本会显式下载 Electron 二进制。如果依赖目录来自旧安装，也可以单独执行：
+涉及 provider、菜单栏、打包或发布前执行：
 
 ```bash
-pnpm exec install-electron
+./scripts/e2e.sh
 ```
 
-### 为什么页面没有真实统计数据？
+## 开发
 
-请先确认设置里已启用来源，然后点击「立即刷新」。应用只展示能够从本机会话文件验证的元数据；某个来源未安装、目录为空，或缺少某项指标时，会显示未知而不是零。
+```bash
+swift test
+swift build
+```
+
+代码结构：
+
+```text
+Sources/TokenBarCore/
+  Models.swift                 额度窗口、来源状态、排序
+  ProviderCatalog.swift        来源元数据（名称、图标、颜色、登录提示）
+  ProviderRegistry.swift       已支持来源的注册表
+  MenuBarLayout.swift          菜单栏三根柱/百分比的配置与解析
+  UsageStore.swift             自动发现、并发刷新、定时器（每次展开刷新）
+  ProbeRunner.swift            --probe 脱敏输出
+  Providers/                   每个来源的检测、凭据读取、接口请求、解析
+  Net/HTTPClient.swift         无 Cookie、无缓存、跨域重定向拦截、可注入测试 transport
+  Security/                    OAuth 令牌缓存（不读钥匙串）
+Sources/TokenBar/
+  TokenBarMain.swift           入口与 CLI
+  AppDelegate.swift            生命周期
+  StatusItemController.swift   菜单栏图标、浮层面板、右键菜单
+  PopoverView.swift            浮层布局
+  MenuBarSettingsView.swift    菜单栏三柱/百分比设置
+  ProviderCardView.swift       来源卡片与额度进度条
+Tests/TokenBarCoreTests/
+  EndToEndTests.swift          临时 HOME + 模拟 HTTP + fake agy + SQLite 全链路
+  MenuBarLayoutTests.swift     三柱/百分比解析与配置
+  ProviderParsingTests.swift   各来源响应解析
+scripts/package_app.sh         生成 dist/TokenBar.app
+scripts/e2e.sh                 完整测试、打包与启动冒烟
+```
+
+## 致谢
+
+接口行为和本地凭据位置参考了 [CodexBar](https://github.com/steipete/CodexBar)（MIT）。TokenBar 是独立实现，只保留“读取本机额度 + 菜单栏展示”这一条最小路径。
+
+Provider 图标来自 CodexBar 的 MIT 资源及各产品官方品牌标识；相关商标归各自所有者。
+
+## License
+
+MIT

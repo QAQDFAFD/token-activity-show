@@ -1,3 +1,0 @@
-import { useI18n } from '../i18n'
-const sources = ['Claude Code', 'Codex', 'Hermes'] as const
-export function EmptyState(): React.JSX.Element { const { t } = useI18n(); return <section className="empty-state" aria-labelledby="empty-title"><header><h2 id="empty-title">{t('waitingActivity')}</h2><p>{t('waitingDescription')}</p></header><div className="source-status-list" aria-label={t('sourceStatus')}>{sources.map((source) => <div key={source}><strong>{source}</strong><span>{t('formatMissing')}</span></div>)}</div><p className="format-note">{t('currentStatus')}<code>FORMAT_NOT_ESTABLISHED</code></p></section> }
