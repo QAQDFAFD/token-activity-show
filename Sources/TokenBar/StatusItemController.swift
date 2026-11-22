@@ -3,7 +3,6 @@ import Combine
 import ServiceManagement
 import SwiftUI
 import TokenBarCore
-
 @MainActor
 final class StatusItemController: NSObject {
     private let store: UsageStore
@@ -90,6 +89,13 @@ final class StatusItemController: NSObject {
                 .font: NSFont.monospacedDigitSystemFont(ofSize: 10, weight: .medium),
                 .foregroundColor: color,
             ])
+
+        let titleWidth = button.attributedTitle.size().width
+        let iconWidth = button.image?.size.width ?? 14
+        let desiredWidth = ceil(iconWidth + 3 + titleWidth + 8)
+        if abs(self.statusItem.length - desiredWidth) > 0.5 {
+            self.statusItem.length = desiredWidth
+        }
 
         if active.isEmpty {
             if self.store.reports.isEmpty {
