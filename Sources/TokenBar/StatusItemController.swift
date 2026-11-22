@@ -98,14 +98,10 @@ final class StatusItemController: NSObject {
         }
 
         if active.isEmpty {
-            if self.store.reports.isEmpty {
-                button.toolTip = "TokenBar：未检测到本地 AI 订阅"
-            } else {
-                let hints = self.store.reports.map { "\($0.info.shortName)：\(self.shortState($0.state))" }
-                button.toolTip = hints.joined(separator: "\n")
-            }
+            button.toolTip = self.store.reports.isEmpty
+                ? "TokenBar：未检测到本地 AI 订阅"
+                : "TokenBar：暂无可用的额度来源"
         } else {
-            let issues = self.store.reports.count - active.count
             let summary = active.map { report in
                 let value = mode.percent(used: report.worstUsedPercent)
                 return "\(report.info.shortName) \(Formatting.percent(value)) \(mode.label)"
@@ -120,7 +116,7 @@ final class StatusItemController: NSObject {
             } else {
                 nil
             }
-            button.toolTip = [titleLine, summary, issues > 0 ? "\(issues) 个异常" : nil]
+            button.toolTip = [titleLine, summary]
                 .compactMap { $0 }
                 .joined(separator: "\n")
         }
@@ -134,14 +130,6 @@ final class StatusItemController: NSObject {
         }
         button.setAccessibilityValue(accessibility)
         self.resizePanel(animated: self.panel.isVisible)
-    }
-
-    private func shortState(_ state: ProviderState) -> String {
-        switch state {
-        case .ok: "正常"
-        case let .needsLogin(hint): hint
-        case let .failed(message, _): message
-        }
     }
 
     private var screenVisibleFrame: NSRect {

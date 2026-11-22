@@ -98,20 +98,23 @@ struct PopoverView: View {
             return "正在刷新…"
         }
         let active = self.store.activeReports.count
-        let issues = self.store.reports.count - active
         if active > 0 {
-            return issues > 0 ? "\(active) 个可用 · \(issues) 个异常" : "\(active) 个可用"
+            return "\(active) 个来源"
         }
         if !self.store.reports.isEmpty {
-            return "\(self.store.reports.count) 个异常"
+            return "未连接"
         }
         return "自动发现本机订阅"
     }
 
     @ViewBuilder
     private var content: some View {
-        if self.store.reports.isEmpty {
-            self.emptyState
+        if self.store.activeReports.isEmpty {
+            if self.store.reports.isEmpty {
+                self.setupEmptyState
+            } else {
+                self.unavailableState
+            }
         } else if self.forMeasurement {
             VStack(spacing: 0) {
                 self.reportCards
@@ -128,19 +131,42 @@ struct PopoverView: View {
 
     @ViewBuilder
     private var reportCards: some View {
-        ForEach(Array(self.store.reports.enumerated()), id: \.element.id) { index, report in
+        ForEach(Array(self.store.activeReports.enumerated()), id: \.element.id) { index, report in
             ProviderCardView(
                 report: report,
                 now: self.now,
                 displayMode: self.store.displayMode)
-            if index < self.store.reports.count - 1 {
+            if index < self.store.activeReports.count - 1 {
                 Divider()
                     .padding(.leading, 42)
             }
         }
     }
 
-    private var emptyState: some View {
+    private var unavailableState: some View {
+        VStack(spacing: 9) {
+            Image(systemName: "gauge.with.dots.needle.0percent")
+                .font(.system(size: 16))
+                .foregroundStyle(.secondary)
+            Text("暂无可用的额度来源")
+                .font(.system(size: 12.5, weight: .medium))
+            Text("登录已过期或暂时无法获取。重新登录后点击刷新。")
+                .font(.system(size: 10.5))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+            Button("刷新") {
+                Task { await self.store.refresh(manual: true) }
+            }
+            .buttonStyle(.plain)
+            .font(.system(size: 10.5))
+            .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(18)
+    }
+
+    private var setupEmptyState: some View {
         VStack(alignment: .leading, spacing: 11) {
             HStack(spacing: 8) {
                 Image(systemName: "gauge.with.dots.needle.0percent")
