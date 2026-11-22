@@ -6,21 +6,27 @@ import TokenBarCore
 
 struct PopoverView: View {
     @ObservedObject var store: UsageStore
+    let forMeasurement: Bool
 
     @State private var now = Date()
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
 
     private let timer = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
 
+    init(store: UsageStore, forMeasurement: Bool = false) {
+        self.store = store
+        self.forMeasurement = forMeasurement
+    }
+
     var body: some View {
         Group {
             if self.store.isShowingMenuBarSettings {
-                MenuBarSettingsView(store: self.store)
+                MenuBarSettingsView(store: self.store, forMeasurement: self.forMeasurement)
             } else {
                 self.mainView
             }
         }
-        .frame(width: 360)
+        .frame(width: AppLayout.panelWidth)
         .background {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(.regularMaterial)
@@ -106,22 +112,31 @@ struct PopoverView: View {
     private var content: some View {
         if self.store.reports.isEmpty {
             self.emptyState
+        } else if self.forMeasurement {
+            VStack(spacing: 0) {
+                self.reportCards
+            }
         } else {
             ScrollView(.vertical, showsIndicators: false) {
                 LazyVStack(spacing: 0) {
-                    ForEach(Array(self.store.reports.enumerated()), id: \.element.id) { index, report in
-                        ProviderCardView(
-                            report: report,
-                            now: self.now,
-                            displayMode: self.store.displayMode)
-                        if index < self.store.reports.count - 1 {
-                            Divider()
-                                .padding(.leading, 42)
-                        }
-                    }
+                    self.reportCards
                 }
             }
             .frame(maxHeight: 600)
+        }
+    }
+
+    @ViewBuilder
+    private var reportCards: some View {
+        ForEach(Array(self.store.reports.enumerated()), id: \.element.id) { index, report in
+            ProviderCardView(
+                report: report,
+                now: self.now,
+                displayMode: self.store.displayMode)
+            if index < self.store.reports.count - 1 {
+                Divider()
+                    .padding(.leading, 42)
+            }
         }
     }
 

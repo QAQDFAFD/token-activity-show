@@ -1,5 +1,9 @@
 import SwiftUI
 
+enum AppLayout {
+    static let panelWidth: CGFloat = 330
+}
+
 extension Color {
     init(hex: String) {
         let cleaned = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)

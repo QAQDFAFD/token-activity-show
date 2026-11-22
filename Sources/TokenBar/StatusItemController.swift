@@ -31,7 +31,7 @@ final class StatusItemController: NSObject {
         button.image = MeterIcon.makeImage(percents: [])
         button.imagePosition = .imageLeading
         button.title = "—"
-        button.font = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .medium)
+        button.font = NSFont.monospacedDigitSystemFont(ofSize: 10, weight: .medium)
         button.target = self
         button.action = #selector(self.handleClick(_:))
         button.sendAction(on: [.leftMouseUp, .rightMouseUp])
@@ -46,7 +46,9 @@ final class StatusItemController: NSObject {
         hosting.view.layer?.backgroundColor = NSColor.clear.cgColor
         self.hostingController = hosting
         self.panel.contentViewController = hosting
-        self.panel.setFrame(self.panelFrame(height: 420, width: 360), display: false)
+        self.panel.setFrame(
+            self.panelFrame(height: 420, width: AppLayout.panelWidth),
+            display: false)
     }
 
     private func bindStore() {
@@ -76,7 +78,7 @@ final class StatusItemController: NSObject {
             mode: mode)
         let displayValue = title.display
         let worstUsed = title.used
-        let titleText = displayValue.map { " \(Int($0.rounded()))%" } ?? " —"
+        let titleText = displayValue.map { "\(Int($0.rounded()))%" } ?? "—"
         let color: NSColor = if let worstUsed, worstUsed >= 90 {
             .systemRed
         } else {
@@ -85,7 +87,7 @@ final class StatusItemController: NSObject {
         button.attributedTitle = NSAttributedString(
             string: titleText,
             attributes: [
-                .font: NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .medium),
+                .font: NSFont.monospacedDigitSystemFont(ofSize: 10, weight: .medium),
                 .foregroundColor: color,
             ])
 
@@ -163,9 +165,9 @@ final class StatusItemController: NSObject {
     }
 
     private func resizePanel(animated: Bool) {
-        let width: CGFloat = 360
+        let width = AppLayout.panelWidth
         let maxHeight = min(680, max(240, self.screenVisibleFrame.height - 24))
-        let measure = NSHostingView(rootView: PopoverView(store: self.store))
+        let measure = NSHostingView(rootView: PopoverView(store: self.store, forMeasurement: true))
         measure.frame = NSRect(x: 0, y: 0, width: width, height: 0)
         measure.layoutSubtreeIfNeeded()
         let height = min(max(measure.fittingSize.height, 180), maxHeight)

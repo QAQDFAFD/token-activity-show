@@ -155,6 +155,7 @@ private struct UsageWindowRow: View {
                     .font(.system(size: 11.5))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+                    .layoutPriority(1)
 
                 if let reset = Formatting.resetDescription(self.window.resetsAt, now: self.now) {
                     Text("· \(reset)")
@@ -162,6 +163,7 @@ private struct UsageWindowRow: View {
                         .foregroundStyle(.tertiary)
                         .lineLimit(1)
                         .truncationMode(.tail)
+                        .layoutPriority(0)
                 }
 
                 Spacer(minLength: 6)

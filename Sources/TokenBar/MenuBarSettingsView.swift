@@ -4,6 +4,12 @@ import TokenBarCore
 
 struct MenuBarSettingsView: View {
     @ObservedObject var store: UsageStore
+    let forMeasurement: Bool
+
+    init(store: UsageStore, forMeasurement: Bool = false) {
+        self.store = store
+        self.forMeasurement = forMeasurement
+    }
 
     private var layout: MenuBarLayout {
         self.store.menuBarLayout.normalized
@@ -17,34 +23,42 @@ struct MenuBarSettingsView: View {
         VStack(spacing: 0) {
             self.header
             Divider()
-            ScrollView(.vertical, showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 14) {
-                    self.preview
-                    self.sectionTitle("左侧柱子")
-                    ForEach(0 ..< 3, id: \.self) { index in
-                        self.slotRow(
-                            label: "柱子 \(index + 1)",
-                            selection: self.bindingForBar(index))
-                    }
-                    self.sectionTitle("右侧百分比")
-                    self.slotRow(
-                        label: "百分比",
-                        selection: self.bindingForPercent)
-                    Text("“自动”会按额度紧张程度填充；选择具体来源或窗口后，该位置固定显示对应额度。")
-                        .font(.system(size: 9.5))
-                        .foregroundStyle(.tertiary)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Button("恢复默认") {
-                        self.store.menuBarLayout = .defaultValue
-                    }
-                    .buttonStyle(.plain)
-                    .font(.system(size: 10.5))
-                    .foregroundStyle(.secondary)
+            if self.forMeasurement {
+                self.settingsContent
+            } else {
+                ScrollView(.vertical, showsIndicators: false) {
+                    self.settingsContent
                 }
-                .padding(14)
+                .frame(maxHeight: 520)
             }
-            .frame(maxHeight: 520)
         }
+    }
+
+    private var settingsContent: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            self.preview
+            self.sectionTitle("左侧柱子")
+            ForEach(0 ..< 3, id: \.self) { index in
+                self.slotRow(
+                    label: "柱子 \(index + 1)",
+                    selection: self.bindingForBar(index))
+            }
+            self.sectionTitle("右侧百分比")
+            self.slotRow(
+                label: "百分比",
+                selection: self.bindingForPercent)
+            Text("“自动”会按额度紧张程度填充；选择具体来源或窗口后，该位置固定显示对应额度。")
+                .font(.system(size: 9.5))
+                .foregroundStyle(.tertiary)
+                .fixedSize(horizontal: false, vertical: true)
+            Button("恢复默认") {
+                self.store.menuBarLayout = .defaultValue
+            }
+            .buttonStyle(.plain)
+            .font(.system(size: 10.5))
+            .foregroundStyle(.secondary)
+        }
+        .padding(14)
     }
 
     private var header: some View {
@@ -136,7 +150,7 @@ struct MenuBarSettingsView: View {
             .pickerStyle(.menu)
             .labelsHidden()
             .controlSize(.small)
-            .frame(width: 240)
+            .frame(width: 220)
         }
     }
 

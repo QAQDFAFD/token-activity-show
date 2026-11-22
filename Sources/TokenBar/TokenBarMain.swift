@@ -105,13 +105,12 @@ enum TokenBarMain {
                     provider: .antigravity,
                     window: "antigravity-gemini-weekly"))
         }
-        let view = PopoverView(store: store)
-        let measure = NSHostingView(rootView: view)
-        measure.frame = NSRect(x: 0, y: 0, width: 360, height: 0)
+        let measure = NSHostingView(rootView: PopoverView(store: store, forMeasurement: true))
+        measure.frame = NSRect(x: 0, y: 0, width: AppLayout.panelWidth, height: 0)
         measure.layoutSubtreeIfNeeded()
-        let height = max(measure.fittingSize.height, 180)
-        let hosting = NSHostingView(rootView: view)
-        hosting.frame = NSRect(x: 0, y: 0, width: 360, height: height)
+        let height = min(max(measure.fittingSize.height, 180), 680)
+        let hosting = NSHostingView(rootView: PopoverView(store: store))
+        hosting.frame = NSRect(x: 0, y: 0, width: AppLayout.panelWidth, height: height)
         hosting.layoutSubtreeIfNeeded()
 
         guard let representation = hosting.bitmapImageRepForCachingDisplay(in: hosting.bounds) else {
